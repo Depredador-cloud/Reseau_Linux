@@ -1,0 +1,125 @@
+Problématique
+
+Vous devez transformer un serveur Ubuntu en “appliance réseau” qui:
+Publie un service web HA/HTTPS en répartissant la charge vers 2 backend web.
+Est sécurisé (pare-feu strict, journalisation), observable (logs + métriques simples) et testable.
+S’installe et se vérifie via un script Bash unique en s’appuyant sur les outils Linux vus précédemment.
+Cible (résumé)
+
+VIP publique/DMZ: 203.0.113.10 (exemple) sur le LB (Ubuntu).
+Backends web internes: 192.168.10.11 et 192.168.10.12 (TCP/80).
+LB: HAProxy (L7) avec santé HTTP, persistance cookie et frontend HTTPS (ACME).
+Sécurité: nftables (SSH restreint, 80/443 ouverts, logs), rsyslog central des accès HAProxy.
+Outils de diag: ss/lsof, nc, nmap, tcpdump; alertes simples via Syslog.
+Pré-requis
+
+Ubuntu LTS, sudo disponible, NTP synchronisé.
+DNS/routage OK (nmcli), ports ouverts côté périmètre: 80/443 vers la VIP.
+Enregistrements DNS du FQDN pointant sur la VIP.
+Étape 1 – Réseau de base et MTU (nmcli, ip)
+
+Pourquoi: config cohérente et persistante, prévention d’erreurs (tunnels/VPN → MTU).
+Commandes Bash (adapter interface, adresses, DNS, MTU):
+sudo nmcli con show
+sudo nmcli con mod "Wired connection 1" ipv4.addresses 203.0.113.10/24
+sudo nmcli con mod "Wired connection 1" ipv4.gateway 203.0.113.1
+sudo nmcli con mod "Wired connection 1" ipv4.dns "9.9.9.9"
+sudo nmcli con mod "Wired connection 1" ipv4.method manual
+sudo nmcli con mod "Wired connection 1" 802-3-ethernet.mtu 1500
+sudo nmcli con up "Wired connection 1"
+Vérif: ip -4 a; ip r
+Étape 2 – Pare-feu (nftables)
+
+Pourquoi: moindre fonctionnalité, ordre de traitement clair (filter/NAT/mangle), logs.
+Script Bash minimal (règles IPv4, adapter subnets):
+sudo apt-get update && sudo apt-get -y install nftables
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo bash -c 'cat >/etc/nftables.conf' << 'EOF'
+table inet filter { chain input { type filter hook input priority 0; ct state established,related accept iif lo accept tcp dport {22} ip saddr 192.168.50.0/24 accept tcp dport {80,443} accept ip protocol icmp accept counter log prefix "DROP_IN " drop } chain forward { type filter hook forward priority 0; ct state established,related accept; counter log prefix "DROP_FWD " drop; } chain output { type filter hook output priority 0; accept; } }
+EOF
+sudo nft -f /etc/nftables.conf
+Vérif: sudo nft list ruleset
+Étape 3 – HAProxy L7 (HTTPS, santé, sticky)
+
+Pourquoi: visibilité L7 (host/path), santé HTTP, persistance cookie, TLS moderne.
+Installation + conf:
+sudo apt-get -y install haproxy
+sudo bash -c 'cat >/etc/haproxy/haproxy.cfg' << 'EOF'
+global log /dev/log local0 maxconn 50000 defaults log global mode http option httplog option http-keep-alive timeout connect 5s timeout client 30s timeout server 30s frontend fe_https bind *:80 bind *:443 ssl crt /etc/haproxy/certs/ alpn h2,http/1.1 http-request redirect scheme https unless { ssl_fc } default_backend be_web backend be_web balance leastconn cookie SRV insert indirect nocache option httpchk GET /healthz http-check expect status 200 server web1 192.168.10.11:80 check cookie s1 server web2 192.168.10.12:80 check cookie s2
+EOF
+sudo mkdir -p /etc/haproxy/certs
+ACME (Let’s Encrypt) exemple (HTTP-01 via HAProxy, utiliser DNS-01 si wildcard):
+sudo apt-get -y install certbot
+certbot certonly --standalone -d www.exemple.com --email admin@exemple.com --agree-tos --non-interactive
+sudo cat /etc/letsencrypt/live/www.exemple.com/fullchain.pem /etc/letsencrypt/live/www.exemple.com/privkey.pem | sudo tee /etc/haproxy/certs/www.exemple.com.pem
+sudo systemctl enable --now haproxy
+Vérif: ss -lntp | grep ':80|:443'; curl -I http://www.exemple.com; openssl s_client -connect www.exemple.com:443 -servername www.exemple.com -brief
+Étape 4 – Journalisation (rsyslog)
+
+Pourquoi: trouver “la chose”, alertes simples, séparation infra/sécu/app.
+Config HAProxy → rsyslog local:
+sudo apt-get -y install rsyslog
+sudo bash -c 'cat >/etc/rsyslog.d/49-haproxy.conf' << 'EOF'
+module(load="imudp") input(type="imudp" port="514") if ($programname == "haproxy") then /var/log/haproxy.log & stop
+EOF
+sudo systemctl restart rsyslog
+Vérif: tail -f /var/log/haproxy.log
+Étape 5 – Tests et diagnostics (ss, lsof, nc, nmap, tcpdump)
+
+Connexions et écoutes:
+ss -tupln | grep -E ':22|:80|:443'
+lsof -i :443
+Tests ports/chemins:
+nc -zv www.exemple.com 80-443
+nmap -sS -p 80,443 www.exemple.com --reason --open
+Santé HTTP:
+curl -vk https://www.exemple.com/healthz
+Capture ciblée (incident):
+sudo tcpdump -ni any host www.exemple.com and port 443 -w tls.pcap
+Si symptômes MTU/tunnels: ping -M do -s 1472 <ip>
+Étape 6 – Observabilité complémentaire (facultatif mais utile)
+
+Syslog central: accepter UDP/TCP 514 et router logs par template (cf. chapitre 12).
+NetFlow/IPFIX: nfdump/nfcapd pour “qui parle à qui” si besoin.
+Suricata en IDS (SPAN/TAP) pour enrichir la télémétrie (eve.json) autour du LB.
+Mini-honeypot de port (nc) sur 2222 pour détecter scans (journaliser + rate-limit).
+Script Bash “tout-en-un” (extrait orchestrateur)
+
+Pourquoi: reproductible, idempotent, exploitable CI/CD.
+Structure proposée:
+Vérif root et OS; apt-get update
+Fonction setup_network() → nmcli
+Fonction setup_firewall() → nftables
+Fonction setup_haproxy() → conf + certs
+Fonction setup_logging() → rsyslog
+Fonction verify() → ss/curl/openssl/nmap
+Exemple d’appel:
+sudo bash setup_lb.sh --vip 203.0.113.10 --fqdns www.exemple.com --backends 192.168.10.11,192.168.10.12 --admin-net 192.168.50.0/24
+Pourquoi cette solution s’appuie sur le contenu
+
+Configuration réseau et MTU: nmcli, ip (chap. 2).
+Diag L4/TCP/UDP, netstat/ss/lsof, netcat, nmap (chap. 3).
+Pare-feu: nftables avec journaux et ordre de traitement (chap. 4).
+TLS/ACME: certificats X.509, Let’s Encrypt, OpenSSL (chap. 8).
+Équilibrage: HAProxy L7, santé, sticky, HTTPS (chap. 10).
+Capture/analyses: tcpdump/Wireshark/TShark (chap. 11).
+Logs/alertes: rsyslog, recherche “la chose” (chap. 12).
+Déception (option): netcat/portspoof pour détection scans (chap. 14).
+Vérifications de bout en bout
+
+Fonctionnel: curl -I https://www.exemple.com; bascule d’un backend (service web down) → HAProxy maintient la dispo (health checks).
+Sécurité: nmap --script ssl-enum-ciphers -p 443 www.exemple.com; nmap -Pn -p- www.exemple.com (seuls 80/443 ouverts).
+Logs: tail -f /var/log/haproxy.log (accès), grep “DROP_IN” /var/log/kern.log (pare-feu).
+Charge: ab/wrk sur https://www.exemple.com/ → suivre maxconn et timeouts.
+Dépannage rapide
+
+Pas d’accès HTTPS: ss -lntp | grep 443; nft list ruleset (règle DROP?); openssl s_client (chaîne TLS).
+Basculement KO: haproxy logs (httpchk/200?), curl http://backend/healthz, routes/MTU.
+Certificats: certbot renew --dry-run; dates et SAN via openssl x509 -text.
+Bonnes pratiques
+
+Toujours tester en lab (snapshots/VM) avant prod.
+Limiter SSH (sous-réseau admin), appliquer mises à jour régulières.
+Documenter les règles nftables et la conf HAProxy (commentaires).
+Automatiser ACME et reload HAProxy (cron/systemd timer).
+Cette démarche “Bash + briques Linux” livre un équilibreur HTTPS sécurisé, observable et maintenable, en réutilisant pas à pas les commandes, outils et bonnes pratiques présentés dans les chapitres précédents.
