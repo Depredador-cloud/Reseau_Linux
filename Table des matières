@@ -1,264 +1,291 @@
-Section 1: Linux Basics
+certainement. Voici le contenu que vous avez fourni, formaté en Markdown pour créer une table des matières structurée.
 
-1 Bienvenue dans la famille Linux
-Pourquoi Linux est un bon choix pour une équipe réseau
-Pourquoi Linux est important ?
-L'histoire de Linux
-Linux grand public pour les centres de données
-Red Hat
-Oracle/Scientific Linux
-SUSE
-Ubuntu
-BSD/FreeBSD/OpenBSD
-Distributions Linux spécialisées
-Pare-feu open source
-Kali Linux
-SIFT
-Security Onion
-Virtualisation
-Linux et le cloud computing
-Choisir une distribution Linux pour votre organisation
-Résumé
-Lectures complémentaires
-2 Configuration et opérations réseau Linux de base – Travailler avec les interfaces locales
-Exigences techniques
-Travailler avec vos paramètres réseau – deux ensembles de commandes
-Affichage des informations IP de l'interface
-Adresses IPv4 et masques de sous-réseau
-Adresses à usage spécial
-Adresses privées – RFC 1918
-Assigner une adresse IP à une interface
-Ajouter une route
-Ajouter une route en utilisant des approches héritées
-Désactiver et activer une interface
-Définir le MTU sur une interface
-Plus sur la commande nmcli
-Résumé
-Questions
-Lectures complémentaires
-Section 2: Linux en tant que nœud réseau et plateforme de dépannage
+---
+# Section 1: Les bases de Linux
+## 1. Bienvenue dans la famille Linux
+* Pourquoi Linux est un bon choix pour une équipe réseau
+* Pourquoi Linux est important ?
+* L'histoire de Linux
+* Linux grand public pour les centres de données
+    * Red Hat
+    * Oracle/Scientific Linux
+    * SUSE
+    * Ubuntu
+    * BSD/FreeBSD/OpenBSD
+* Distributions Linux spécialisées
+    * Pare-feu open source
+    * Kali Linux
+    * SIFT
+    * Security Onion
+* Virtualisation
+* Linux et le cloud computing
+* Choisir une distribution Linux pour votre organisation
+* Résumé
+* Lectures complémentaires
 
-3 Utilisation de Linux et des outils Linux pour le diagnostic réseau
-Exigences techniques
-Bases du réseau – le modèle OSI
-Couche 2 – Relier les adresses IP et MAC à l'aide d'ARP
-Valeurs OUI des adresses MAC
-Couche 4 – Comment fonctionnent les ports TCP et UDP
-Couche 4 – TCP et la poignée de main à trois voies
-Énumération des ports locaux – à quoi suis-je connecté ? Qu'est-ce que j'écoute ?
-Énumération des ports distants à l'aide d'outils natifs
-Énumération des ports et services distants – nmap
-Scripts NMAP
-Y a-t-il des limites à Nmap ?
-Opérations de diagnostic sans fil
-Résumé
-Questions
-Lectures complémentaires
-4 Le pare-feu Linux
-Exigences techniques
-Configuration d'iptables
-iptables de haut niveau
-La table NAT
-La table mangle
-Ordre des opérations dans iptables
-Configuration de nftables
-Configuration de base de nftables
-Utilisation de fichiers d'inclusion
-Suppression de notre configuration de pare-feu
-Résumé
-Questions
-Lectures complémentaires
-5 Normes de sécurité Linux avec des exemples concrets
-Exigences techniques
-Pourquoi dois-je sécuriser mes hôtes Linux ?
-Considérations de sécurité spécifiques au cloud
-Normes de sécurité couramment rencontrées spécifiques à l'industrie
-Les contrôles critiques du Center for Internet Security
-Commencer avec les contrôles de sécurité critiques 1 et 2 du CIS
-OSQuery – contrôles critiques 1 et 2, ajout des contrôles 10 et 17
-Les benchmarks du Center for Internet Security
-Appliquer un benchmark CIS – sécuriser SSH sur Linux
-SELinux et AppArmor
-Résumé
-Questions
-Lectures complémentaires
-Section 3: Services réseau Linux
+---
+## 2. Configuration et opérations réseau Linux de base – Travailler avec les interfaces locales
+* Exigences techniques
+* Travailler avec vos paramètres réseau – deux ensembles de commandes
+* Affichage des informations IP de l'interface
+* Adresses IPv4 et masques de sous-réseau
+* Adresses à usage spécial
+* Adresses privées – RFC 1918
+* Assigner une adresse IP à une interface
+* Ajouter une route
+* Ajouter une route en utilisant des approches héritées
+* Désactiver et activer une interface
+* Définir le MTU sur une interface
+* Plus sur la commande nmcli
+* Résumé
+* Questions
+* Lectures complémentaires
 
-6 Services DNS sur Linux
-Exigences techniques
-Qu'est-ce que le DNS ?
-Deux implémentations principales de serveurs DNS
-Le serveur DNS "interne" d'une organisation (et un aperçu du DNS)
-Un serveur DNS accessible sur Internet
-Implémentations DNS courantes
-Installation de base : BIND pour usage interne
-BIND : Spécificités de l'implémentation accessible sur Internet
-Dépannage et reconnaissance DNS
-DoH
-DoT
-knot-dnsutils
-Implémentation de DoT dans Nmap
-DNSSEC
-Résumé
-Questions
-Lectures complémentaires
-7 Services DHCP sur Linux
-Comment fonctionne le DHCP ?
-Opération DHCP de base
-Requêtes DHCP depuis d'autres sous-réseaux (forwarders, relais ou helpers)
-Options DHCP
-Sécuriser vos services DHCP
-Serveur DHCP malveillant
-Client DHCP malveillant
-Installation et configuration d'un serveur DHCP
-Configuration de base
-Réservations statiques
-Journalisation et dépannage DHCP simples au quotidien
-Résumé
-Questions
-Lectures complémentaires
-8 Services de certificats sur Linux
-Exigences techniques
-Que sont les certificats ?
-Acquérir un certificat
-Utilisation d'un certificat – exemple de serveur web
-Construire une autorité de certification privée
-Construire une CA avec OpenSSL
-Demander et signer un CSR
-Sécuriser votre infrastructure d'autorité de certification
-Conseils hérités éprouvés
-Conseils modernes
-Risques spécifiques à la CA dans les infrastructures modernes
-Transparence des certificats
-Utilisation de l'autorité de certification pour l'inventaire ou la reconnaissance
-Automatisation des certificats et le protocole ACME
-Feuille de chèque OpenSSL
-Résumé
-Questions
-Lectures complémentaires
-9 Services RADIUS pour Linux
-Exigences techniques
-Bases de RADIUS – qu'est-ce que RADIUS et comment ça marche ?
-Implémentation de RADIUS avec l'authentification Linux locale
-RADIUS avec authentification backend LDAP/LDAPS
-Authentification NTLM (AD) – introduction de CHAP
-Unlang – le langage
-Scénarios d'utilisation de RADIUS
-Authentification VPN à l'aide de l'ID utilisateur et du mot de passe
-Accès administratif aux périphériques réseau
-Configuration RADIUS pour l'authentification EAP-TLS
-Authentification réseau sans fil à l'aide de 802.1x/EAP-TLS
-Authentification réseau filaire à l'aide de 802.1x/EAP-TLS
-Utilisation de Google Authenticator pour l'authentification multifacteur avec RADIUS
-Résumé
-Questions
-Lectures complémentaires
-10 Services d'équilibrage de charge pour Linux
-Exigences techniques
-Introduction à l'équilibrage de charge
-Round Robin DNS (RRDNS)
-Proxy entrant – équilibrage de charge de couche 7
-NAT entrant – équilibrage de charge de couche 4
-Équilibrage de charge DSR
-Algorithmes d'équilibrage de charge
-Vérifications de l'état du serveur et du service
-Considérations de conception de l'équilibrage de charge du centre de données
-Considérations de gestion et de réseau du centre de données
-Construire un équilibreur de charge HAProxy NAT/proxy
-Avant de commencer la configuration – NIC, adressage et routage
-Avant de commencer la configuration – optimisation des performances
-Équilibrage de charge des services TCP – services web
-Mise en place de connexions persistantes (sticky)
-Note d'implémentation
-Front-end HTTPS
-Une dernière note sur la sécurité de l'équilibreur de charge
-Résumé
-Questions
-Lectures complémentaires
-11 Capture et analyse de paquets sous Linux
-Exigences techniques
-Introduction à la capture de paquets – les bons endroits où chercher
-Capture depuis chaque extrémité
-Commutation du port de surveillance
-Hôte intermédiaire en ligne
-Tap réseau
-Approches de capture de paquets malveillantes
-Considérations de performance lors de la capture
-Outils de capture
-tcpdump
-Wireshark
-TShark
-Autres outils PCAP
-Filtrage du trafic capturé
-Filtres de capture Wireshark (capture du trafic de votre réseau domestique)
-Filtres de capture tcpdump – téléphones VoIP et DHCP
-Plus de filtres de capture – LLDP et CDP
-Collecte de fichiers à partir d'une capture de paquets
-Dépannage d'une application – capture d'un appel téléphonique VoIP
-Filtres d'affichage Wireshark – séparation des données spécifiques dans une capture
-Résumé
-Questions
-Lectures complémentaires
-12 Surveillance réseau à l'aide de Linux
-Exigences techniques
-Journalisation à l'aide de Syslog
-Taille, rotation et bases de données des journaux
-Analyse des journaux – trouver "la chose"
-Alertes sur des événements spécifiques
-Exemple de serveur Syslog – Syslog
-Le projet Dshield
-Gestion des périphériques réseau à l'aide de SNMP
-Exemple de déploiement SNMP NMS – LibreNMS
-SNMPv3
-Collecte de données NetFlow sur Linux
-Qu'est-ce que NetFlow et ses "cousins" SFLOW, J-Flow et IPFIX ?
-Concepts d'implémentation de la collecte de flux
-Configuration d'un routeur ou d'un commutateur pour la collecte de flux
-Un exemple de serveur NetFlow utilisant NFDump et NFSen
-Résumé
-Questions
-Lectures complémentaires
-OID SNMP couramment utilisés
-13 Systèmes de prévention d'intrusion sous Linux
-Exigences techniques
-Qu'est-ce qu'un IPS ?
-Options d'architecture – où un IPS s'intègre-t-il dans votre centre de données ?
-Techniques d'évasion IPS
-Détection d'un WAF
-Fragmentation et autres méthodes d'évasion IPS
-Solutions IPS classiques/basées sur le réseau – Snort et Suricata
-Exemple d'IPS Suricata
-Construction d'une règle IPS
-Surveillance passive du trafic
-Surveillance passive avec P0F – exemple
-Exemple Zeek – collecte de métadonnées réseau
-Résumé
-Questions
-Lectures complémentaires
-14 Services de honeypot sous Linux
-Exigences techniques
-Aperçu du honeypot – qu'est-ce qu'un honeypot et pourquoi en vouloir un ?
-Scénarios de déploiement et architecture – où placer un honeypot ?
-Risques liés au déploiement de honeypots
-Exemples de honeypots
-Honeypots d'alerte de port de base – iptables, netcat et portspoof
-Autres honeypots courants
-Honeypot distribué/communautaire – le projet DShield Honeypot du Internet Storm Center
-Résumé
-Questions
-Lectures complémentaires
-Évaluations
+---
+# Section 2: Linux en tant que nœud réseau et plateforme de dépannage
+## 3. Utilisation de Linux et des outils Linux pour le diagnostic réseau
+* Exigences techniques
+* Bases du réseau – le modèle OSI
+* Couche 2 – Relier les adresses IP et MAC à l'aide d'ARP
+* Valeurs OUI des adresses MAC
+* Couche 4 – Comment fonctionnent les ports TCP et UDP
+* Couche 4 – TCP et la poignée de main à trois voies
+* Énumération des ports locaux – à quoi suis-je connecté ? Qu'est-ce que j'écoute ?
+* Énumération des ports distants à l'aide d'outils natifs
+* Énumération des ports et services distants – nmap
+* Scripts NMAP
+* Y a-t-il des limites à Nmap ?
+* Opérations de diagnostic sans fil
+* Résumé
+* Questions
+* Lectures complémentaires
 
-Chapitre 2 – Configuration et opérations réseau Linux de base – Travailler avec les interfaces locales
-Chapitre 3 – Utilisation de Linux et des outils Linux pour le diagnostic réseau
-Chapitre 4 – Le pare-feu Linux
-Chapitre 5 – Normes de sécurité Linux avec des exemples concrets
-Chapitre 6 – Services DNS sur Linux
-Chapitre 7 – Services DHCP sur Linux
-Chapitre 8 – Services de certificats sur Linux
-Chapitre 9 – Services RADIUS pour Linux
-Chapitre 10 – Services d'équilibrage de charge pour Linux
-Chapitre 11 – Capture et analyse de paquets sous Linux
-Chapitre 12 – Surveillance réseau à l'aide de Linux
-Chapitre 13 – Systèmes de prévention d'intrusion sous Linux
-Chapitre 14 – Services de honeypot sous Linux
+---
+## 4. Le pare-feu Linux
+* Exigences techniques
+* Configuration d'iptables
+    * iptables de haut niveau
+    * La table NAT
+    * La table mangle
+    * Ordre des opérations dans iptables
+* Configuration de nftables
+    * Configuration de base de nftables
+    * Utilisation de fichiers d'inclusion
+* Suppression de notre configuration de pare-feu
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 5. Normes de sécurité Linux avec des exemples concrets
+* Exigences techniques
+* Pourquoi dois-je sécuriser mes hôtes Linux ?
+* Considérations de sécurité spécifiques au cloud
+* Normes de sécurité couramment rencontrées spécifiques à l'industrie
+* Les contrôles critiques du Center for Internet Security
+* Commencer avec les contrôles de sécurité critiques 1 et 2 du CIS
+* OSQuery – contrôles critiques 1 et 2, ajout des contrôles 10 et 17
+* Les benchmarks du Center for Internet Security
+* Appliquer un benchmark CIS – sécuriser SSH sur Linux
+* SELinux et AppArmor
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+# Section 3: Services réseau Linux
+## 6. Services DNS sur Linux
+* Exigences techniques
+* Qu'est-ce que le DNS ?
+* Deux implémentations principales de serveurs DNS
+* Le serveur DNS "interne" d'une organisation (et un aperçu du DNS)
+* Un serveur DNS accessible sur Internet
+* Implémentations DNS courantes
+* Installation de base : BIND pour usage interne
+* BIND : Spécificités de l'implémentation accessible sur Internet
+* Dépannage et reconnaissance DNS
+* DoH
+* DoT
+* knot-dnsutils
+* Implémentation de DoT dans Nmap
+* DNSSEC
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 7. Services DHCP sur Linux
+* Comment fonctionne le DHCP ?
+    * Opération DHCP de base
+    * Requêtes DHCP depuis d'autres sous-réseaux (forwarders, relais ou helpers)
+    * Options DHCP
+* Sécuriser vos services DHCP
+    * Serveur DHCP malveillant
+    * Client DHCP malveillant
+* Installation et configuration d'un serveur DHCP
+    * Configuration de base
+    * Réservations statiques
+* Journalisation et dépannage DHCP simples au quotidien
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 8. Services de certificats sur Linux
+* Exigences techniques
+* Que sont les certificats ?
+* Acquérir un certificat
+* Utilisation d'un certificat – exemple de serveur web
+* Construire une autorité de certification privée
+    * Construire une CA avec OpenSSL
+    * Demander et signer un CSR
+* Sécuriser votre infrastructure d'autorité de certification
+    * Conseils hérités éprouvés
+    * Conseils modernes
+    * Risques spécifiques à la CA dans les infrastructures modernes
+* Transparence des certificats
+* Utilisation de l'autorité de certification pour l'inventaire ou la reconnaissance
+* Automatisation des certificats et le protocole ACME
+* Feuille de chèque OpenSSL
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 9. Services RADIUS pour Linux
+* Exigences techniques
+* Bases de RADIUS – qu'est-ce que RADIUS et comment ça marche ?
+* Implémentation de RADIUS avec l'authentification Linux locale
+* RADIUS avec authentification backend LDAP/LDAPS
+* Authentification NTLM (AD) – introduction de CHAP
+* Unlang – le langage
+* Scénarios d'utilisation de RADIUS
+    * Authentification VPN à l'aide de l'ID utilisateur et du mot de passe
+    * Accès administratif aux périphériques réseau
+    * Configuration RADIUS pour l'authentification EAP-TLS
+    * Authentification réseau sans fil à l'aide de 802.1x/EAP-TLS
+    * Authentification réseau filaire à l'aide de 802.1x/EAP-TLS
+* Utilisation de Google Authenticator pour l'authentification multifacteur avec RADIUS
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 10. Services d'équilibrage de charge pour Linux
+* Exigences techniques
+* Introduction à l'équilibrage de charge
+    * Round Robin DNS (RRDNS)
+    * Proxy entrant – équilibrage de charge de couche 7
+    * NAT entrant – équilibrage de charge de couche 4
+    * Équilibrage de charge DSR
+* Algorithmes d'équilibrage de charge
+* Vérifications de l'état du serveur et du service
+* Considérations de conception de l'équilibrage de charge du centre de données
+* Considérations de gestion et de réseau du centre de données
+* Construire un équilibreur de charge HAProxy NAT/proxy
+    * Avant de commencer la configuration – NIC, adressage et routage
+    * Avant de commencer la configuration – optimisation des performances
+    * Équilibrage de charge des services TCP – services web
+    * Mise en place de connexions persistantes (sticky)
+    * Note d'implémentation
+    * Front-end HTTPS
+* Une dernière note sur la sécurité de l'équilibreur de charge
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 11. Capture et analyse de paquets sous Linux
+* Exigences techniques
+* Introduction à la capture de paquets – les bons endroits où chercher
+    * Capture depuis chaque extrémité
+    * Commutation du port de surveillance
+    * Hôte intermédiaire en ligne
+    * Tap réseau
+    * Approches de capture de paquets malveillantes
+* Considérations de performance lors de la capture
+* Outils de capture
+    * tcpdump
+    * Wireshark
+    * TShark
+    * Autres outils PCAP
+* Filtrage du trafic capturé
+    * Filtres de capture Wireshark (capture du trafic de votre réseau domestique)
+    * Filtres de capture tcpdump – téléphones VoIP et DHCP
+    * Plus de filtres de capture – LLDP et CDP
+* Collecte de fichiers à partir d'une capture de paquets
+* Dépannage d'une application – capture d'un appel téléphonique VoIP
+* Filtres d'affichage Wireshark – séparation des données spécifiques dans une capture
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 12. Surveillance réseau à l'aide de Linux
+* Exigences techniques
+* Journalisation à l'aide de Syslog
+    * Taille, rotation et bases de données des journaux
+    * Analyse des journaux – trouver "la chose"
+    * Alertes sur des événements spécifiques
+    * Exemple de serveur Syslog – Syslog
+* Le projet Dshield
+* Gestion des périphériques réseau à l'aide de SNMP
+    * Exemple de déploiement SNMP NMS – LibreNMS
+    * SNMPv3
+* Collecte de données NetFlow sur Linux
+    * Qu'est-ce que NetFlow et ses "cousins" SFLOW, J-Flow et IPFIX ?
+    * Concepts d'implémentation de la collecte de flux
+    * Configuration d'un routeur ou d'un commutateur pour la collecte de flux
+    * Un exemple de serveur NetFlow utilisant NFDump et NFSen
+* Résumé
+* Questions
+* Lectures complémentaires
+* OID SNMP couramment utilisés
+
+---
+## 13. Systèmes de prévention d'intrusion sous Linux
+* Exigences techniques
+* Qu'est-ce qu'un IPS ?
+* Options d'architecture – où un IPS s'intègre-t-il dans votre centre de données ?
+* Techniques d'évasion IPS
+    * Détection d'un WAF
+    * Fragmentation et autres méthodes d'évasion IPS
+* Solutions IPS classiques/basées sur le réseau – Snort et Suricata
+* Exemple d'IPS Suricata
+* Construction d'une règle IPS
+* Surveillance passive du trafic
+    * Surveillance passive avec P0F – exemple
+* Exemple Zeek – collecte de métadonnées réseau
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+## 14. Services de honeypot sous Linux
+* Exigences techniques
+* Aperçu du honeypot – qu'est-ce qu'un honeypot et pourquoi en vouloir un ?
+* Scénarios de déploiement et architecture – où placer un honeypot ?
+* Risques liés au déploiement de honeypots
+* Exemples de honeypots
+    * Honeypots d'alerte de port de base – iptables, netcat et portspoof
+    * Autres honeypots courants
+* Honeypot distribué/communautaire – le projet DShield Honeypot du Internet Storm Center
+* Résumé
+* Questions
+* Lectures complémentaires
+
+---
+# Évaluations
+* Chapitre 2 – Configuration et opérations réseau Linux de base – Travailler avec les interfaces locales
+* Chapitre 3 – Utilisation de Linux et des outils Linux pour le diagnostic réseau
+* Chapitre 4 – Le pare-feu Linux
+* Chapitre 5 – Normes de sécurité Linux avec des exemples concrets
+* Chapitre 6 – Services DNS sur Linux
+* Chapitre 7 – Services DHCP sur Linux
+* Chapitre 8 – Services de certificats sur Linux
+* Chapitre 9 – Services RADIUS pour Linux
+* Chapitre 10 – Services d'équilibrage de charge pour Linux
+* Chapitre 11 – Capture et analyse de paquets sous Linux
+* Chapitre 12 – Surveillance réseau à l'aide de Linux
+* Chapitre 13 – Systèmes de prévention d'intrusion sous Linux
+* Chapitre 14 – Services de honeypot sous Linux
