@@ -1,0 +1,80 @@
+3 Utilisation de Linux et des outils Linux pour le diagnostic réseau
+
+Objectif du chapitre
+
+Comprendre comment utiliser Linux pour diagnostiquer le réseau, du modèle OSI aux outils de scan, en passant par l’analyse des ports, des services et du Wi‑Fi.
+Exigences techniques
+
+Hôte/VM Linux (Ubuntu recommandé), droits sudo.
+Connexion internet pour installer des outils (netcat, nmap, etc.).
+Carte Wi‑Fi pour les exercices sans fil.
+Outils clés: commandes natives (ip, ss, netstat, lsof), netcat (nc), nmap (+ scripts NSE), Kismet, Wavemon, LinSSID.
+Bases – Modèle OSI (rappels utiles au dépannage)
+
+Couches 1–3: physique, liaison (MAC), réseau (IP) = « média ».
+Couches 4–7: transport (TCP/UDP), session, présentation, application = « hôte ».
+Les données « descendent » (encapsulation) à l’envoi, « remontent » (décapsulation) à la réception.
+Clin d’œil: le « Layer 8 » = facteur humain (procédés, erreurs).
+Couche 2 – ARP et adresses MAC
+
+ARP lie IP (L3) ↔ MAC (L2) par requêtes/réponses, mis en cache (ARP table).
+Timeouts: hôtes (court), commutateurs (CAM ~5 min), routeurs (souvent 4 h).
+Consultation/ajustements: tableau ARP, timeouts via /proc, ajout/suppression d’entrées ARP, changement MAC (clonage).
+OUI (Organizationally Unique Identifier): 3 premiers octets d’une MAC identifiant le constructeur (utile en enquête).
+Couche 4 – Ports TCP/UDP et sessions
+
+Ports bien connus 0–1023 (serveurs), 1024–65535 (clients/éphémères). 5‑tuple = IP src/dst, port src/dst, protocole.
+UDP: sans état (pas de handshake), faible overhead (VoIP/vidéo).
+TCP: handshake en 3 temps (SYN → SYN‑ACK → ACK), états de session (LISTEN, ESTABLISHED, TIME_WAIT, etc.).
+Énumération locale – à quoi je suis connecté / qu’est‑ce que j’écoute
+
+ss / netstat: connexions et ports à l’écoute (-t/u, -l, -p, -a, -n). Comprendre les états TCP.
+lsof -i: lie connexions/processus (montre le sens client/serveur).
+Chaîner/filtrer la sortie (grep, cut, tr, tee) pour produire des vues lisibles ou des exports.
+Énumération distante – outils natifs
+
+telnet: test basique d’ouverture de port (limité).
+netcat (nc):
+Scan rapide: nc -zv hôte ports (TCP) + redirection STDERR→STDOUT pour filtrer.
+UDP: possible mais lent et peu fiable sur de grands ranges.
+Écouteur/lab: stand‑up de services temporaires (ex. mini‑site HTTP, transfert de fichiers) pour tester règles/routage.
+Scan de ports et services – Nmap
+
+Découverte: nmap -sn (ping scan) d’un sous‑réseau.
+Ports: -p, --open, --reason, scans UDP (-sU) → nécessite sudo (promisc/sniff).
+Détection de services/versions: -sV (ex. DNS/HTTPS, identifie produits).
+Affichage OUI/MAC si même LAN.
+Scripts NSE:
+smb-protocols: inventaire SMBv1/v2/v3.
+smb-vuln-ms17-010: détection de vulnérabilités (ex. EternalBlue).
+Précautions:
+Légalité: toujours obtenir une autorisation écrite.
+Production: certains équipements (médicaux/SCADA) sont sensibles. Tester d’abord hors charge.
+Limites et alternatives
+
+Performance Nmap: lent sur très grands espaces (IPv4/IPv6).
+Optimisations: parallélisme, timeouts (man nmap).
+Alternative haute vitesse: MASSCAN (scan internets IPv4 en minutes), puis « chaîner » sur Nmap/Nessus/OpenVAS.
+Diagnostics sans fil
+
+Kismet: découverte SSID/BSSID/clients (détecte SSID « cachés »).
+Wavemon: métriques de liaison de votre connexion (AP, RSSI, débit).
+LinSSID: vue graphique 2,4/5 GHz (puissance, canaux, recouvrements).
+2,4 GHz: privilégier 1/6/11; largeur de canal élargie (40/80 MHz) = forte interférence.
+5 GHz: plus de canaux, meilleure cohabitation; vérifier l’occupation avant choix.
+À retenir
+
+Maîtriser ARP/MAC (L2) et TCP/UDP (L4) accélère tout dépannage.
+ss/lsof pour l’état local; nc/telnet pour tests ciblés; Nmap (+NSE) pour cartographier réseau et services.
+Attention aux aspects légaux/sécurité opérationnelle lors des scans.
+En Wi‑Fi, surveiller canaux/largeurs/recouvrements; 5 GHz offre plus de latitude.
+Outils principaux (récapitulatif)
+
+Local: ss, netstat, lsof, ip.
+Scans/tests: nc, nmap (+ NSE), masscan.
+Wi‑Fi: Kismet, Wavemon, LinSSID.
+Bonnes pratiques
+
+Filtrer/structurer les sorties (grep/cut/tr/tee) pour des rapports exploitables.
+Tester en lab avant production; documenter résultats et exceptions.
+Intégrer les scans dans des fenêtres de maintenance et des procédures approuvées.
