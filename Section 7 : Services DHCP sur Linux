@@ -1,0 +1,88 @@
+7 Services DHCP sur Linux
+
+Objectif du chapitre
+
+Comprendre le fonctionnement de DHCP et savoir déployer, sécuriser et dépanner un service DHCP sous Linux pour divers cas d’usage (postes, VoIP, boot PXE, etc.).
+Comment fonctionne le DHCP (rappel)
+
+Découverte et attribution dynamique d’adresse IP et de paramètres réseau via échanges UDP (ports 67/68).
+État « sans adresse » initial du client → diffusion (broadcast) pour trouver un serveur.
+Opération DHCP de base (DORA)
+
+Discover: le client diffuse une requête pour découvrir les serveurs.
+Offer: le serveur propose une adresse et des options.
+Request: le client demande explicitement l’offre choisie.
+Acknowledgement: le serveur confirme l’attribution (bail/lease), puis le client configure son interface.
+Requêtes DHCP inter‑sous‑réseaux (relay/helper)
+
+Les routeurs ne propagent pas les broadcasts → utiliser un relais DHCP.
+Configuration côté réseau: “ip helper‑address” (ou équivalent) vers l’IP du serveur DHCP.
+Le relais renseigne giaddr/Option 82 pour aiguiller le serveur sur le bon pool.
+Options DHCP (courantes)
+
+Option 3 (routeur/passerelle), 6 (DNS), 15 (domain‑name), 42 (NTP).
+VoIP/PXE: 66/67 (TFTP/bootfile), 150 (Cisco TFTP), 43 (vendor‑specific), 60 (Vendor Class), 82 (Relay Agent).
+TTL des baux (default/max‑lease‑time), domain‑search, MTU, etc. selon besoin.
+Sécuriser vos services DHCP
+
+Côté réseau:
+DHCP Snooping (commutateurs): ports « trusted » (vers serveur), « untrusted » (vers clients).
+Dynamic ARP Inspection (DAI), Port Security, 802.1X/MAB/NAC pour contrôler qui se connecte.
+Côté serveur:
+Lier l’écoute à des interfaces précises; filtrer UDP 67/68 via pare‑feu hôte/VLANs dédiés.
+Journaux centralisés et détection d’anomalies (taux, options suspectes, offres concurrentes).
+Processus:
+Segmentation des VLANs, liste de réservations (MAC) pour équipements critiques, durcissement du serveur.
+Serveur DHCP malveillant (rogue)
+
+Symptômes: clients reçoivent de « mauvaises » IP/passerelles/DNS.
+Contre‑mesures: DHCP Snooping (bloque offres depuis ports non approuvés), surveillance des logs, scans ciblés (nmap script dhcp-discover), isolement VLAN.
+Client DHCP malveillant
+
+Attaques par inondation (épuisement pool), spoofing d’identité/options.
+Atténuation: rate‑limit sur les ports d’accès, NAC/802.1X, listes de réservations/ACL, supervision des baux.
+Installation et configuration d’un serveur DHCP (Linux)
+
+Paquets typiques: isc-dhcp-server (dhcpd) ou Kea (nouvelle génération).
+Emplacements clés (Ubuntu/Debian):
+/etc/dhcp/dhcpd.conf (configuration), /var/lib/dhcp/dhcpd.leases (baux), /etc/default/isc-dhcp-server (interfaces).
+Firewall: autoriser UDP 67 (serveur) et vérifier l’écoute sur l’interface LAN.
+Configuration de base (exemples)
+
+Déclarer le sous‑réseau:
+subnet 192.168.10.0 netmask 255.255.255.0 { range 192.168.10.100 192.168.10.200; option routers 192.168.10.1; option domain-name-servers 192.168.10.10; default-lease-time 3600; max-lease-time 7200; }
+Paramètres globaux: authoritative; domain-name; log-facility; classes/vendors si nécessaires.
+En multi‑VLAN: un bloc subnet par réseau + relais configuré sur les L3.
+Réservations statiques
+
+Lier une MAC à une IP fixe pour équipements critiques:
+host cam_ip { hardware ethernet 00:11:22:33:44:55; fixed-address 192.168.10.20; }
+Bonnes pratiques: documenter la MAC, description, emplacement, contact.
+Journalisation et dépannage DHCP (au quotidien)
+
+Journaux:
+Ubuntu/Debian: /var/log/syslog, réglable via log-facility; systemd: journalctl -u isc-dhcp-server.
+Fichier des baux: /var/lib/dhcp/dhcpd.leases (état en temps réel).
+Côté client:
+Renouveler/libérer: dhclient -r; dhclient -v; vérifier /var/log/syslog.
+Capture réseau:
+tcpdump -ni <iface> port 67 or port 68 (observer DORA et options).
+Outils utiles: dhcping (test serveur), dhcpdump (parse), nmap (découverte/rogue), ip helper (vérif relais).
+Points d’échec fréquents:
+Interface du serveur incorrecte, firewall bloquant 67/68, relais non configuré, pool épuisé, options incohérentes (MTU/DNS), timeouts.
+À retenir
+
+DHCP repose sur DORA et le broadcast → penser « relais » pour les réseaux routés.
+La sécurité se joue surtout au commutateur (DHCP Snooping/DAI) et à la segmentation.
+Les journaux et le fichier de baux sont vos alliés clés pour le support N1/N2.
+Standardiser options/baux, réserver ce qui est critique et surveiller l’épuisement de pool.
+Questions (exemples)
+
+Comment différencier un problème de relais DHCP d’un pool épuisé côté serveur ?
+Quelles options DHCP indispensables pour postes, VoIP et PXE ?
+Quelles mesures réseau empêchent un serveur DHCP malveillant de nuire ?
+Lectures complémentaires (pistes)
+
+Documentation ISC DHCP/Kea, guides de configuration dhcpd.conf.
+Bonnes pratiques de sécurité L2 (DHCP Snooping, DAI, Port Security).
+Outils de diagnostic: tcpdump, dhcping, dhcpdump, journalctl/syslog.
