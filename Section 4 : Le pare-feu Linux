@@ -82,6 +82,3 @@ NAT vs IPsec/PBR: bien placer les opérations (pré/post-routing).
 iptables reste courant mais nftables est l’avenir: plus rapide, plus scriptable, mieux intégré IPv6.
 Maîtriser filter/NAT/mangle et l’ordre des traitements est clé pour une sécurité correcte et un dépannage efficace.
 Structurer et documenter (inclure, commenter, journaliser) rend le pare-feu maintenable et fiable.
-
-Bookmark message
-Copy message
