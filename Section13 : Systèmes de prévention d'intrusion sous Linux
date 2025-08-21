@@ -1,0 +1,103 @@
+13 Systèmes de prévention d'intrusion sous Linux
+
+Objectif du chapitre
+
+Comprendre ce qu’est un IPS (Intrusion Prevention System), où et comment l’intégrer dans une architecture Linux.
+Connaître les techniques d’évasion et les moyens de s’en prémunir (normalisation, réassemblage).
+Mettre en œuvre des solutions IPS open source (Suricata, Snort), écrire des règles, et compléter par de la surveillance passive (p0f, Zeek).
+Exigences techniques
+
+Hôte/VM Linux avec sudo, NTP, CPU multi-cœurs, NIC compatibles RSS.
+Outils: Suricata/Snort (libpcap, AF_PACKET/NFQUEUE), iptables/nftables, p0f, Zeek.
+Débits/latences en jeu: prévoir TAP/SPAN, disques rapides si journalisation intensive.
+Qu’est-ce qu’un IPS ?
+
+Système réseau qui détecte ET bloque en ligne des attaques (signatures, anomalies, réputation).
+Modes:
+IDS (détection seule, en miroir/SPAN/TAP).
+IPS inline (en chemin), fail-open vs fail-closed, haute dispo requise.
+Options d’architecture – placement dans le DC
+
+En périmètre (north-south): blocage frontal des menaces internet (web/VPN).
+Inter-segments (east-west): contrôle latéralisation (serveurs, VDI, micro‑segmentations).
+En TAP/IDS (visibilité) ou inline/IPS (prévention); HA active/standby ou active/active; by‑pass matériel possible.
+Techniques d’évasion IPS
+
+Variation/protocole: encodages HTTP (chunked, URL-encoding, double encodage), case/ordre d’en-têtes, compressions (gzip).
+Fragmentation IP/TCP: paquets qui se chevauchent, TTL asymétriques, out‑of‑order; désynchronisation de la pile.
+Chiffrement: TLS (SNI détournement, JA3/JA3S exotiques), DoH/DoT masquent le contenu.
+Polymorphisme/padding: shellcode muté, no-op sleds, anomalies de longueur.
+Détection d’un WAF
+
+Indices côté HTTP: codes/headers particuliers, pages d’erreur WAF, cookies propres.
+Différentiel de réponses (payload bénin vs suspect), latences/ratelimiting.
+Outils et méthodes: sondes ciblées (ex. variations d’URI/headers), fingerprinting (ex. wafw00f).
+Fragmentation et autres méthodes d’évasion – contre‑mesures
+
+Activer la normalisation: réassemblage IP/TCP, timeout adéquat, détection des fragments chevauchants.
+Normaliseurs HTTP/2→1.1, décodages cohérents, déconpression contrôlée.
+Politique “normalize then detect”: faire correspondre le comportement de la pile des hôtes protégés.
+Solutions IPS classiques – Snort et Suricata
+
+Snort: historique, riche écosystème de règles; IPS via inline (NFQUEUE).
+Suricata: multithread, AF_PACKET inline, TLS/HTTP/FTP/DNS décodés nativement, sortie JSON (eve.json).
+Règles: ET Open/Pro, listes de réputation, règles maison; gestion par SID/REV/classtype, metadata.
+Exemple d’IPS Suricata (principes)
+
+Modes:
+IDS: af-packet en écoute (SPAN/TAP).
+IPS inline: af-packet IPS ou NFQUEUE (iptables/nftables) avec actions drop/reject.
+Pipeline:
+Décodage → normalisation → signatures → actions (accept/drop) → logs (eve.json).
+Intégrations: syslog/ELK, Prometheus, tir de PCAP sur alarme (suricata.yaml), Community-ID pour corrélation.
+Construction d’une règle IPS (bases)
+
+Structure type (Suricata/Snort):
+action proto src_ip src_port -> dst_ip dst_port (options);
+options: msg:"…"; content:"…"; flow:to_server,established; http_* (uri, header), pcre; sid:100001; rev:1; classtype:…; metadata:…; threshold:…;
+Bonnes pratiques:
+Contexte (flow, direction), encodages (urldecode), haute sélectivité pour éviter les faux positifs.
+Test/validation en IDS avant passage en drop; seuils/ratelimiting.
+Surveillance passive du trafic
+
+IDS + télémetrie sans blocage; utile pour détection/forensic, inventaire passif, baselines.
+Surveillance passive avec P0F – exemple
+
+Fingerprinting passif d’OS/stack TCP (TTL, fenêtre, options), estimation d’uptime, type de lien.
+Cas d’usage: inventaire des OS, détection d’anomalies (device inattendu, VM mal configurée).
+Exemple Zeek – collecte de métadonnées réseau
+
+Moteur NSM: produit des logs riches (conn, dns, http, ssl/tls, files, weird).
+Détection par politiques/scripts (langage Zeek), extraction d’objets, JA3/JA3S, fichier/entropy.
+Cas d’usage: threat hunting, corrélations (SIEM), investigation rapide sans payload massif.
+Bonnes pratiques IPS/NSM
+
+Déployer en lab, mesurer latence/perte; choisir fail-open/closed selon risque métier.
+Normaliser avant détection; tenir à jour règles/listes, désactiver signatures verbeuses.
+Journaliser en JSON (eve) + centraliser; définir SLA (taux d’alertes, MTTR).
+Séparer plans: détection (Zeek/Suricata IDS) + prévention ciblée (Suricata IPS) selon criticité.
+HA et observabilité: métriques (drop, packet loss), buffers, CPU/IRQ, tuning AF_PACKET (tpacket-v3), DPDK/PF_RING si besoin.
+À retenir
+
+L’IPS efficace combine placement judicieux, normalisation robuste et règles de qualité.
+Suricata et Snort fournissent la prévention; Zeek et p0f complètent la visibilité passive.
+Les techniques d’évasion visent les écarts de parsing: alignez IPS et piles cibles, testez en continu.
+Prioriser la résilience (HA, by‑pass), la maintenance (mises à jour de règles) et l’intégration SIEM.
+Questions (exemples)
+
+Quand privilégier IDS+blocage applicatif ciblé plutôt qu’un IPS inline global ?
+Quelles options de normalisation activer pour contrer l’évasion par fragmentation et HTTP encodé ?
+Comment valider en sécurité une nouvelle règle (cycle test→IDS→quarantine→drop) ?
+Zeek et Suricata: quelles métriques suivent la qualité de détection et l’absence de perte ?
+Lectures complémentaires (pistes)
+
+Documentation Suricata/Snort (tuning AF_PACKET/NFQUEUE, règles, outputs).
+Guides normalisation/réassemblage, HTTP evasion techniques, frag evasion.
+Zeek scripts/logs de référence (conn/http/dns/ssl/files), JA3/JA3S.
+PF_RING/DPDK/AF_XDP pour hautes performances; architecture HA (TAP by‑pass, cluster).
+
+Bookmark message
+Copy message
+Export
+
+Notifications
