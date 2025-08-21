@@ -1,0 +1,90 @@
+2 Configuration et opérations réseau Linux de base – Travailler avec les interfaces locales
+
+Vue d’ensemble
+
+Objectif: savoir afficher, configurer et dépanner les interfaces réseau locales sous Linux, en maîtrisant adresses IP, routes, MTU et outils modernes vs hérités.
+Exigences techniques
+
+Système: Ubuntu 20.x (valable pour la plupart des distros).
+Prérequis: droits sudo, connexion réseau pour installer d’anciens outils si besoin (net-tools).
+Deux familles d’outils
+
+Outils modernes (recommandés): iproute2 et NetworkManager
+ip pour adresses/routes/liens
+nmcli pour profils/config persistantes
+Outils hérités (encore présents sur anciens systèmes): net-tools
+ifconfig, netstat, route (installer via sudo apt install net-tools)
+Afficher les informations IP et routes
+
+Interfaces et adresses:
+ip -4 address (ou ip a)
+ifconfig (hérité)
+Routage:
+ip route (ou ip r)
+netstat -rn / route -n (hérité)
+États courants:
+Default gateway (route par défaut)
+Route connectée (réseau local)
+Link-local 169.254.0.0/16 (adresse de secours sans DHCP)
+IPv4, masques et adresses spéciales
+
+IPv4 = 4 octets; masques en /CIDR (ex: /24 = 255.255.255.0).
+Adresses spéciales:
+Broadcast: tous les bits hôtes à 1 (ex: 192.168.1.255 pour /24).
+Multicast: 224.0.0.0/4 (adresses bien connues pour divers protocoles).
+Link-local: 169.254.0.0/16 (APIPA/LLA).
+Privées (RFC 1918):
+10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (nécessitent NAT pour Internet).
+Assigner une adresse IP à une interface
+
+Persistant avec nmcli (recommandé):
+lister: sudo nmcli connection show
+configurer:
+sudo nmcli con mod "Wired connection 1" ipv4.addresses 192.168.122.22/24
+sudo nmcli con mod "Wired connection 1" ipv4.gateway 192.168.122.1
+sudo nmcli con mod "Wired connection 1" ipv4.dns "8.8.8.8"
+sudo nmcli con mod "Wired connection 1" ipv4.method manual
+appliquer: sudo nmcli connection up "Wired connection 1"
+Hérité (variable selon distro, non recommandé sur systèmes modernes):
+/etc/resolv.conf (DNS), /etc/sysconfig/network-scripts/ifcfg-ethX (RHEL), /etc/network/interfaces (Debian/anciens)
+Ajouter une route
+
+Temporaire:
+sudo ip route add 10.10.10.0/24 via 192.168.122.10 [dev ens33]
+Persistante (nmcli):
+sudo nmcli con mod "Wired connection 1" +ipv4.routes "10.10.11.0/24 192.168.122.11"
+sudo nmcli connection up "Wired connection 1"
+Hérité:
+sudo route add -net 10.10.12.0 netmask 255.255.255.0 gw 192.168.122.12
+Persistance via fichiers spécifiques à la distro (ex: /etc/network/interfaces, route-<device>, ou rc.local).
+Activer/Désactiver une interface
+
+Moderne: sudo ip link set ens33 down | up
+Hérité: sudo ifconfig ens33 down | up
+Astuce: éviter de “couper la branche” si connecté à distance (SSH).
+Définir le MTU
+
+Contexte: optimiser pour iSCSI/backup (jumbo 9000) ou réduire pour tunnels/VPN/satellite (DF, fragmentation).
+nmcli:
+sudo nmcli con mod "Wired connection 1" 802-3-ethernet.mtu 9000
+sudo nmcli connection up "Wired connection 1"
+Aller plus loin avec nmcli
+
+Mode interactif: sudo nmcli connection edit type ethernet
+Paramètres utiles:
+Ethernet: vitesse/duplex/auto-négociation, MAC clonée, MTU
+IPv4: addresses, gateway, routes, dns, ignore-auto-*, route-metric, never-default
+Proxy: proxy.method, pac-url
+Bonnes pratiques et pièges
+
+Préférer ip/nmcli pour cohérence, IPv6 et automatisation.
+Regrouper et ordonner logiquement les règles/paramètres pour éviter les conflits et faciliter la maintenance.
+Tester les modifications hors production (VM, snapshots), documenter (nmcli comments, fichiers).
+À retenir
+
+ip et nmcli couvrent l’essentiel: affichage, adresses, routes, MTU, activation.
+Comprendre IPv4/CIDR, adresses spéciales et RFC1918 est indispensable au dépannage.
+Persistance des configs: nmcli simplifie; les méthodes héritées varient selon la distribution.
+
+Bookmark message
+Copy message
