@@ -1,0 +1,60 @@
+Pourquoi Linux pour les équipes réseau
+
+Automatisation et scripts natifs qui garantissent cohérence et échelle (moins d’erreurs qu’en GUI).
+Outils réseau riches et disponibles gratuitement (installation simple via gestionnaires de paquets).
+Coûts réduits (distributions et outils open source, support communautaire ou commercial au choix).
+Écosystème omniprésent sur serveurs, appliances réseau/sécurité, cloud et mobiles (Android).
+Pourquoi Linux est important
+
+Socle de la majorité des services d’infrastructure (firewalls, IDS/IPS, SIEM, load balancers, SAN/NAS).
+Maturité, patching intégré, modularité (quasi tout est « fichier »), richesse des langages (Go, Rust, Python, etc.).
+Accélérateur du mouvement “Infrastructure as Code” (Ansible, Puppet, Terraform).
+Le “desktop” s’est déplacé vers le mobile (Android/iOS basés Unix/Linux).
+Histoire (Unix → GNU/Linux)
+
+Unix (Bell Labs, Ritchie/Thompson), puis projet GNU (FSF, Stallman), puis Linux (kernel par Linus Torvalds en 1992).
+Linux = noyau + distribution (dizaines de « distros » avec dépôt/packaging/objectif propres).
+Arbre de familles (ex. Debian → Ubuntu ; Fedora → RHEL/CentOS Stream ; openSUSE → SLES).
+Distributions majeures pour centres de données
+
+Red Hat (Fedora en amont, RHEL supporté, CentOS devenu CentOS Stream « upstream » de RHEL).
+Oracle Linux (compatible RHEL, support commercial).
+SUSE/openSUSE (Leap plus stable, Tumbleweed rolling ; SLES en entreprise, variantes HPC).
+Ubuntu (cycle semestriel, LTS tous les 2 ans avec 5 ans de support ; serveur/desktop).
+BSD (FreeBSD/OpenBSD) comme alternatives Unix historiques, perçues longtemps comme plus “secure”.
+Distributions spécialisées
+
+Pare-feu open source: pfSense, OPNsense, Untangle, Smoothwall.
+Sécurité offensive: Kali Linux (pentest, outils harmonisés).
+Forensique/IR: SIFT (DFIR, scriptable sur Ubuntu/WSL).
+Détection/défense: Security Onion (threat hunting, NSM, logs) avec Suricata, Zeek, Wazuh.
+Stockage: TrueNAS, XigmaNAS (NAS/SAN open source).
+Virtualisation
+
+Démocratisation via VMware (Workstation/ESXi), KVM, Xen, VirtualBox, QEMU, Proxmox.
+Avantages pédagogiques et opérationnels: snapshots, clones, lab multiposte, séparation des rôles/services.
+Linux et le cloud computing
+
+Le cloud s’appuie massivement sur Linux (coût, stabilité, automatisation via API).
+Caractéristiques: multi‑tenant, facturation granulaire (OpEx), APIs/Infra-as-Code, élasticité.
+Attention aux coûts cumulés lors des « lift-and-shift » sans optimisation.
+Services “serverless/aaS” souvent Linux derrière des API abstraites.
+Zoom distributions (points distinctifs)
+
+Red Hat/RHEL: stabilité entreprise, écosystème outillage/ISV, CentOS Stream en amont.
+SUSE/SLES: forte présence entreprise et Europe, openSUSE Leap/Tumbleweed.
+Ubuntu LTS: populaire en cloud/devops, support LTS 5 ans, large communauté.
+BSD: base de nombreux appliances et macOS (Darwin), réputation sécurité/fiabilité.
+Outils de sécurité et durcissement
+
+Modules noyau: SELinux (politique MAC avancée, très complet), AppArmor (plus simple à mettre en œuvre).
+Disponibles selon distro (SELinux natif RHEL, AppArmor courant sur Ubuntu/SUSE).
+Points à retenir pour le choix d’une distro
+
+Standardiser sur 1 famille pour capitaliser compétences, support et patching coordonné.
+Privilégier une distro “mainstream” avec support (communautaire et/ou commercial).
+Planifier la gouvernance des mises à jour (LTS/stable vs rolling, fenêtres de maintenance).
+Message clé
+
+Linux est la plate‑forme de facto pour les services réseaux modernes, du datacenter au cloud.
+La combinaison coût, flexibilité, automatisation et écosystème d’outils en fait un choix naturel pour les équipes réseau.
