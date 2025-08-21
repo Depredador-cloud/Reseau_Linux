@@ -1,0 +1,87 @@
+4 Le pare-feu Linux
+
+Objectif du chapitre
+
+Comprendre et mettre en œuvre le pare-feu Linux pour sécuriser l’accès aux services (administration et applicatifs), journaliser les accès et préparer la maintenance/troubleshooting.
+Connaître iptables (héritage largement déployé) et nftables (successeur moderne).
+Exigences techniques
+
+Hôte/VM Linux (ex. Ubuntu), droits sudo.
+Outils: iptables/iptables-save/restore, nft (nftables).
+Optionnel: second hôte pour tester les règles.
+iptables – Vue d’ensemble
+
+Tables/chaînes cibles:
+Tables principales: filter (contrôles), nat (traduction), mangle (modifications de paquets).
+Chaînes filter par défaut: INPUT (vers l’hôte), FORWARD (transit), OUTPUT (depuis l’hôte).
+Cibles: ACCEPT, DROP, RETURN (ou saut vers une autre chaîne).
+Règles et ordre:
+Parcours séquentiel (haut → bas). L’ordre impacte performances et logique (placer le plus fréquent en haut).
+Politique par défaut (policy) en fin de chaîne (par défaut ACCEPT). Attention à ne pas se verrouiller en passant en DROP à distance (SSH).
+iptables – Cas d’usage typiques
+
+Restreindre SSH (tcp/22) à un sous-réseau d’admin; autoriser HTTPS (tcp/443) au public; exceptions ciblées (deny avant allow).
+Journalisation:
+-j LOG, --log-level, --log-prefix pour tracer (ex. tentatives SSH, échecs/accès web).
+Emplacement des logs (Ubuntu: /var/log/kern.log; RHEL/Fedora: /var/log/messages).
+Persistance:
+iptables-save / iptables-restore (packages: iptables-persistent sur Debian/Ubuntu, iptables-services sur RHEL).
+NAT – Table nat
+
+Masquerade/overload pour sortie Internet (ex. POSTROUTING via interface WAN).
+Mappage étatful du tuple (IP/port/proto) pour le retour; timeout différent TCP/UDP.
+Mangle – Ajustements bas niveau
+
+Modifier MSS/ToS/DSCP, etc. (ex. clamp MSS sur SYN pour liens à MTU réduit: DSL/VPN/satellite).
+Déterminer MTU/MSS utiles via ping -M do -s ou nping (DF/MTU).
+Ordre des opérations (cheminement iptables)
+
+Importance du pré/post-routing (NAT/cryptage IPsec, PBR/QoS).
+Référence visuelle utile: flowchart d’iptables (enchaînement PREROUTING → INPUT/FORWARD/OUTPUT → POSTROUTING).
+nftables – Pourquoi et principes
+
+Avantages: meilleures performances (kernel path), API/automatisation, IPv6 natif, syntaxe plus cohérente.
+Commande unique: nft (création tables/chaînes/règles).
+Traduction depuis iptables: iptables-translate pour accélérer les migrations.
+nftables – Mise en route
+
+Création et règles (exemple de logique équivalente à iptables):
+nft add table filter
+nft add chain filter INPUT
+nft add rule … (match interface/ips/proto/ports) counter accept|drop comment "…"
+Inspection:
+nft list ruleset (counters, commentaires).
+Persistance:
+Fichier de configuration chargé au boot (exposé dans le texte comme /etc/nftools.conf) avec la possibilité d’organiser par blocs.
+nftables – Structuration avancée
+
+Fichiers d’inclusion:
+include de « rôles » (ex. ipv4-ipv6-webserver-rules.nft, ssh-admin-vlan-access-only.nft).
+vmap/dispatch:
+Orientation vers des chaînes selon plages d’IP (ex. par VLAN/sous-réseau) pour isoler les règles par segment.
+Réinitialiser/retirer la configuration
+
+iptables:
+sudo iptables -F INPUT
+sudo iptables -F FORWARD
+nftables:
+sudo nft flush ruleset
+Bonnes pratiques
+
+Tester sur hôte de lab; prévoir un accès console en cas de verrouillage.
+Regrouper les règles par service/usage; commenter abondamment (-m comment / comment “…”) pour auto‑documentation.
+Mettre les règles les plus courantes en tête; limiter la surface d’attaque (deny par défaut si approprié, après règles d’accès SSH de secours).
+Journaliser les accès/échecs critiques (SSH, admin, services sensibles) et surveiller les logs.
+Points d’attention
+
+Coexistence iptables/nftables: éviter les deux en parallèle pour ne pas confondre l’exploitant suivant.
+Changement de policy (ACCEPT→DROP) à distance: toujours préparer les règles d’exception avant bascule.
+NAT vs IPsec/PBR: bien placer les opérations (pré/post-routing).
+À retenir
+
+iptables reste courant mais nftables est l’avenir: plus rapide, plus scriptable, mieux intégré IPv6.
+Maîtriser filter/NAT/mangle et l’ordre des traitements est clé pour une sécurité correcte et un dépannage efficace.
+Structurer et documenter (inclure, commenter, journaliser) rend le pare-feu maintenable et fiable.
+
+Bookmark message
+Copy message
