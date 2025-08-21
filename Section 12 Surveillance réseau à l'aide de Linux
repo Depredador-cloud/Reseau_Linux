@@ -1,0 +1,103 @@
+12 Surveillance réseau à l'aide de Linux
+
+Objectif du chapitre
+
+Mettre en place une surveillance réseau complète avec Linux: centraliser les journaux (Syslog), superviser via SNMP, collecter/analyser les flux (NetFlow/IPFIX), et générer des alertes exploitables.
+Déployer des outils libres (rsyslog/syslog-ng, LibreNMS, NFDump/NFSen) et comprendre DShield pour le partage de renseignements.
+Exigences techniques
+
+Hôte/VM Linux avec sudo, stockage rapide (logs/flows), horloge NTP.
+Paquets: rsyslog (ou syslog-ng), logrotate, outils d’indexation (optionnel: Elastic/OpenSearch), snmp/snmpd, LibreNMS (PHP/MySQL/rrdtool), nfdump/nfsen.
+Ouverture des ports: Syslog (UDP/TCP 514), SNMP (161/udp, 162/udp pour traps), NetFlow (par défaut 2055/udp, selon config).
+Journalisation à l’aide de Syslog
+
+Centraliser les logs systèmes/applicatifs depuis serveurs/équipements réseau.
+Transport: UDP 514 (léger, non fiable) ou TCP 514 (fiable); TLS recommandé pour l’inter-site.
+Structuration: facility/priority; templates (format, horodatage), routage par hôte/source/mot‑clé.
+Sécurité: filtrer/limiter les sources autorisées, stockage séparé, rotation et rétention définies.
+Taille, rotation et bases de données des journaux
+
+logrotate: rotation par taille/temps, compression, rétention, post‑rotate (reload).
+Haute volumétrie: basculer vers une base (Elastic/OpenSearch/Graylog/Loki) pour recherche et rétention historique; séparer « hot/warm/cold ».
+Analyse des journaux – trouver “la chose”
+
+Méthodologie: requêtes par hôte/époque/sévérité/process, pivots par identifiants (user/IP/session).
+Réduire le bruit: whitelists/blacklists, normalisation (grok/regex), enrichissement (GEOIP, tags).
+Corrélation: joindre logs réseau (firewall/DHCP/DNS) et système (auth/audit).
+Alertes sur des événements spécifiques
+
+Moteur d’alertes (rsyslog omprog, ElastAlert/Kibana Alerting, Graylog Streams): seuils, fenêtres glissantes, agrégations.
+Cas d’usage: échecs SSH, changements de config, montée d’erreurs interface, anomalies DNS, burst de 5xx web.
+Exemple de serveur Syslog – Syslog
+
+Activer la réception distante (rsyslog: imudp/imtcp), définir templates, écrire par hôte ou par source (par‑hôte/par‑service).
+Séparer les files: « infra », « sécurité », « applicatif »; activer queue disque (spool) pour résilience.
+Test: logger depuis un client; vérifier volumétrie et rotation.
+Le projet DShield
+
+Partage communautaire d’attaques (Internet Storm Center). Soumettre des logs de firewall/deny pour intelligence collective.
+Bénéfices: visibilité sur tendances, détection d’adresses malveillantes, contribution à la veille.
+Gestion des périphériques réseau à l’aide de SNMP
+
+Supervision d’état/performances: interfaces, CPU, mémoire, tables ARP, capteurs.
+Deux volets: polling (SNMP GET) et traps/informs (push d’événements).
+Sécurité: privilégier SNMPv3 (authPriv), limiter les vues (MIB‑views), lister hôtes autorisés.
+Exemple de déploiement SNMP NMS – LibreNMS
+
+Stack: PHP/MySQL/rrdtool, découverte (ICMP/SNMP), polling régulier, graphes RRD, alerting intégré.
+Intégration: découverte auto par sous‑réseau, templates d’appareils, seuils d’alertes (ifErrors, CPU, température).
+Authentification: SNMPv3 users (auth/priv), gestion des credentials par groupes de devices.
+SNMPv3 (bonnes pratiques)
+
+Modes: noAuthNoPriv (éviter), authNoPriv (HMAC), authPriv (HMAC + chiffrement) recommandé.
+Créer users, views, access: restreindre OIDs accessibles; isoler par ACL/firewall.
+Collecte de données NetFlow sur Linux
+
+Objectif: visibilité “qui parle à qui” (5‑tuple, volumes, to/from), sans payload.
+Outils: nfcapd (daemon collector), nfdump (requêtes), NFSen (web).
+Dimensions: IP/src‑dst/ports/proto, bytes/packets, ToS/DSCP, interfaces, ASNs (selon export).
+Qu’est-ce que NetFlow et ses “cousins”
+
+NetFlow v5/v9 (Cisco): v9 = templates extensibles.
+IPFIX: standard IETF (souple, basé sur templates).
+sFlow: échantillonnage paquet + counters (datacenter, haute vitesse).
+J‑Flow (Juniper): équivalent NetFlow.
+Concepts d’implémentation de la collecte de flux
+
+Conception: un ou plusieurs collectors; stockage (partitionnement temporel), rétention/agrégation (roll‑ups).
+Précision vs coût: taux d’échantillonnage (sFlow) vs NetFlow/IPFIX complet.
+Sécurité: limiter qui peut envoyer des flows, isoler la collecte (VLAN/ACL), surveiller les pertes.
+Configuration d’un routeur/commutateur pour la collecte de flux
+
+Activer l’export sur interfaces d’intérêt; définir version (v9/IPFIX), collector IP/port, source interface.
+Vérifier CPU/ASIC impact, tailles cache/timeout (active/inactive), DSCP de l’export si nécessaire.
+Exemple de serveur NetFlow (NFDump/NFSen)
+
+nfcapd: écoute sur port (ex. 2055/udp), fichiers tournants (par tranche de temps).
+nfdump: requêtes et agrégations (top talkers, ports, proto, subnets).
+NFSen: visualisation web, filtres, plugins (anomalies, alertes basiques).
+OID SNMP couramment utilisés
+
+Système: sysName/sysDescr/sysUpTime (SNMPv2‑MIB).
+Interfaces (IF‑MIB): ifDescr, ifAlias, ifSpeed, ifHCInOctets/ifHCOutOctets, ifInErrors/ifOutErrors, ifOperStatus.
+Environnements: entPhySensorValue (ENTITY‑SENSOR‑MIB), température/ventilateurs (vendor).
+Hôtes: hrProcessorLoad, hrStorageUsed/Size (HOST‑RESOURCES‑MIB).
+À retenir
+
+Syslog central + rotation/rétention saine = base de toute observabilité.
+SNMPv3 pour la supervision fiable/secure; LibreNMS accélère la mise en œuvre et l’alerting.
+NetFlow/IPFIX apportent la vue “flux” (trafic/volumes/relations) complémentaire aux logs.
+Sécurité et gouvernance: limiter sources, chiffrer/transporter de façon fiable, définir politiques d’alertes et rétention.
+Questions (exemples)
+
+Quand préférer NetFlow/IPFIX à sFlow pour une application métier critique ?
+Quelles règles RSYSLOG mettre en place pour séparer sécurité vs applicatif et éviter la saturation disque ?
+Comment migrer des équipements d’entreprise de SNMPv2c vers SNMPv3 sans perte de visibilité ?
+Quels timeouts/paramètres d’export NetFlow influencent la précision des rapports (top talkers, durées de flux) ?
+Lectures complémentaires (pistes)
+
+Documentation rsyslog/syslog‑ng, logrotate et intégrations ELK/OpenSearch/Graylog/Loki.
+LibreNMS: docs d’installation, tuning poller/discovery, alert rules.
+NFDump/NFSen: guides d’admin, requêtes avancées, modèles IPFIX.
+RFC NetFlow/IPFIX/sFlow, MIBs standard (IF‑MIB, HOST‑RESOURCES‑MIB, ENTITY‑SENSOR‑MIB).
+DShield/ISC: procédures de soumission et rapports quotidiens.
