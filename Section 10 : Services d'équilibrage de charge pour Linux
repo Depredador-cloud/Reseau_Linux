@@ -1,0 +1,112 @@
+10 Services d'équilibrage de charge pour Linux
+Objectif du chapitre
+
+Poser les bases de l’équilibrage de charge sous Linux, du simple RRDNS aux architectures L4/L7 et DSR.
+Construire un équilibreur avec HAProxy (mode proxy et NAT), avec santé, persistance et HTTPS.
+Donner des lignes directrices de conception, d’exploitation et de sécurité en data center.
+Exigences techniques
+
+Hôte/VM Linux avec droits sudo (de préférence 2+ NIC, support RSS).
+HAProxy installé; accès aux backends; pare-feu ouvert selon besoin (80/443/ports applicatifs).
+Outils de test: curl, openssl s_client, hping/ab/wrk, tcpdump.
+Introduction à l’équilibrage de charge
+
+Objectif: distribuer la charge, augmenter disponibilité, masquer les pannes, simplifier les mises à jour.
+Modèles:
+L4 (transport/TCP/UDP): rapide, agnostique au protocole (NAT, DSR, IPVS).
+L7 (application/HTTP): routage par URL/Host/Header, réécriture, cookies, WAF optionnel.
+Topologies: 1‑bras (SNAT), en‑ligne, anycast/ECMP, VRRP/HA pair.
+Round Robin DNS (RRDNS)
+
+Avantages: très simple, sans matériel intermédiaire.
+Limites: pas de santé fine, stickiness aléatoire, caches DNS imprévisibles, basculement lent.
+Proxy entrant – équilibrage L7
+
+Terminaison TCP/HTTP(s) sur le LB; visibilité applicative (URI, headers, cookies).
+Fonctions: routage par SNI/Host/Path, réécriture, compression, H2/ALPN, insertion de cookies.
+NAT entrant – équilibrage L4
+
+Le LB fait SNAT/DNAT; neutre à l’applicatif; performances élevées.
+Attention au retour asymétrique (conntrack côté LB) et aux timeouts TCP/UDP.
+Équilibrage de charge DSR (Direct Server Return)
+
+Entrée via LB; retour direct serveur→client (pas de retour via LB).
+Pro: charge réduite sur le LB; Contraintes: configuration IP virtuelle (VIP) sur backends, ARP suppression, MTU/cohérence, protocole orienté requête (HTTP).
+Algorithmes d’équilibrage de charge
+
+Round‑robin, least‑conn, source/IP‑hash (stickiness implicite), consistent hashing (cache/CDN).
+Pondérations par serveur (capacité/affinité).
+Vérifications de l’état (health checks)
+
+L4: connectivité TCP/port.
+L7: HTTP GET/HEAD, codes attendus, mots‑clés, SNI/TLS handshake.
+Avancés: scripts externes, checks hors‑bande (ex: /healthz), temps de montée/descente, inter/fastinter.
+Conception data center – réseau
+
+Placement: proche des clients (north‑south) ou des services (east‑west).
+Adressage/VLAN: VIP dédiées, routes de retour symétriques; si NAT, penser conntrack et timeouts.
+MTU/jumbo: homogénéité bout‑à‑bout; si tunnels/VPN, ajuster MSS.
+Haute dispo: VRRP/keepalived ou anycast; surveiller MAC/ARP/ND, ARP flux.
+Conception data center – gestion
+
+Observabilité: métriques (prometheus), logs (format HTTP/TCP), traces (correlation ID).
+Blue/green/canary: par pool/pondération; outillage de déploiement.
+Capacité: tests de charge, limites fd/connexions, file d’attente (backlog).
+Construire un équilibreur HAProxy NAT/proxy
+
+Modes: mode tcp (L4), mode http (L7) selon besoin.
+Frontend: bind VIP:port, timeouts, options httplog, ACL/règles.
+Backend: serveurs, algorithme (balance), health checks, maxconn, poids.
+NAT: en 1‑bras (SNAT) ou en‑ligne; ajuster sysctl/conntrack le cas échéant.
+Avant de commencer – NIC, adressage, routage
+
+IRQ/RSS/affinité CPU, GRO/LRO; désactiver si besoin pour latence.
+VIP sur interface (ou via VRRP); routes de retour vers LB si sans NAT.
+Offload et checksum: tester performance vs précision (tcpdump, capture).
+Avant de commencer – optimisation
+
+sysctl: net.core.somaxconn, rmem/wmem, tcp_tw_reuse, conntrack (si NAT).
+HAProxy: ulimit/nofile, tune.bufsize, maxconn globale/front/back.
+Kernel: sélection de scheduler, IRQ balance; pinning si haut débit.
+Équilibrage des services TCP – web
+
+L4: proxy TCP simple, utile pour bases non HTTP (MQ, DB read‑only).
+L7: routage par Host/Path, headers; réécriture; compression; cache léger (le cas échéant).
+Connexions persistantes (sticky)
+
+Cookies applicatifs (insert/rehash), source IP, consistent hash (clé = session, header, cookie).
+Attention: stickiness vs redistribution lors d’ajout/retrait de nœuds.
+Note d’implémentation
+
+Backends doivent connaître la VIP (logs/URLs absolues, X‑Forwarded‑For).
+Timeouts adaptés (client/server/connect/http‑keep‑alive).
+Gérer les erreurs: pages d’erreur, circuit‑breaker (rise/fall), retries avec parcimonie (idempotence).
+Front‑end HTTPS
+
+Terminaison TLS sur LB (certs, SNI, OCSP stapling, HSTS, TLS 1.2/1.3).
+Passthrough TLS si besoin de bout‑à‑bout (perte de visibilité L7 au LB).
+ACME/automatisation: renouvellement certs; support SNI multi‑domaines; HTTP/2/ALPN.
+Sécurité de l’équilibreur
+
+Surface minimale: limiter mgmt (bind sur loopback/VPN), firewall strict, MAJ régulières.
+Rate‑limiting, tarpit, protections DoS basiques (deny‑lists, maxconn par IP).
+Journaux signifiants (correlation‑id), chiffrement admin (ssh/tls), secrets protégés.
+À retenir
+
+Choisir L4 vs L7 selon besoin (performance vs logique applicative).
+Éviter RRDNS pour la haute dispo critique; préférer LB avec health checks.
+DSR = très performant mais exigeant (réseau/OS). NAT/Proxy = plus simple à opérer.
+HA et sécurité dès la conception (VRRP/anycast, durcissement, observabilité).
+Tester, mesurer, itérer (time‑outs, buffers, algorithmes, stickiness).
+Questions (exemples)
+
+Quand privilégier L4/NAT plutôt que L7/HTTP dans une architecture micro‑services ?
+Quelles implications réseau pour un design DSR (ARP/route/retour direct) ?
+Quels mécanismes de persistance recommander pour une appli stateful ?
+Comment automatiser le renouvellement TLS sur un LB multi‑domaines sans interruption ?
+Lectures complémentaires (pistes)
+
+Documentation HAProxy (configuration, performance tuning, SSL/TLS).
+keepalived/VRRP, LVS/IPVS (L4/DSR).
+Guides de durcissement TLS (Mozilla), observabilité (Prometheus/Grafana).
+Bonnes pratiques Linux réseau (sysctl, IRQ, RSS, offloads).
