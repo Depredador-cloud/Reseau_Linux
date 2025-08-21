@@ -1,0 +1,87 @@
+6 Services DNS sur Linux
+
+Objectif du chapitre
+
+Comprendre le rôle du DNS, ses modes (récursif vs autoritatif) et ses implémentations sous Linux.
+Savoir déployer BIND en usage interne, sécuriser une instance exposée sur Internet, dépanner et analyser.
+Découvrir DoH/DoT, les utilitaires knot-dnsutils, l’usage de Nmap pour la reconnaissance, et les bases de DNSSEC.
+Exigences techniques
+
+Hôte/VM Linux avec droits sudo.
+Paquets: bind9 (ou alternatives), outils de résolution (dnsutils/knot-dnsutils), nmap.
+Pare-feu ouvert selon rôle: 53/udp et 53/tcp; pour DoT: 853/tcp; DoH via 443/tcp (reverse proxy).
+Qu’est-ce que le DNS ?
+
+Service de résolution nom → adresse (et inverse), hiérarchique et décentralisé.
+Deux rôles majeurs:
+Résolveur récursif (cache, interroge l’Internet pour le compte des clients).
+Serveur autoritatif (répond de façon faisant autorité pour ses zones).
+Deux implémentations principales de serveurs DNS
+
+Récursif (resolver/caching): pour clients internes; performance et politiques (filtrage, logs).
+Autoritatif: pour publier des zones (interne, externe); cohérence, sécurité (transferts, DNSSEC).
+Serveur DNS interne (aperçu + bonnes pratiques)
+
+Activer la récursion et le cache pour les clients autorisés (ACL, split‑horizon au besoin).
+Zones internes (forward/reverse), mises à jour dynamiques sécurisées (TSIG) si couplé au DHCP.
+Forwarders vers résolveurs de confiance; TTL adaptés; journaux (requêtes/réponses, erreurs).
+Sécurité: limiter recursion/queries par réseau, contrôler les transferts (allow‑transfer + TSIG), RRL côté récursif si exposé.
+Serveur DNS exposé sur Internet (autoritatif)
+
+Désactiver la récursion (authoritative‑only).
+Sécuriser transferts de zone (allow‑transfer, TSIG), limiter AXFR/IXFR aux secondaires.
+Activer DNSSEC (signature des zones, publication DS), RRL/minimal‑responses pour atténuer l’amplification.
+Opérations: hidden master + secondaires publics (éventuellement anycast), supervision et journaux.
+Implémentations DNS courantes
+
+BIND (autoritatif + récursif), Unbound (récursif), NSD/Knot DNS (autoritatifs), PowerDNS (autoritatif/recursor), CoreDNS (cloud/k8s).
+Installation de base: BIND pour usage interne (idée de parcours)
+
+Installer bind9 et outils; configurer named.conf.options (forwarders, recursion/ACL, dnssec-validation).
+Déclarer zones internes (forward + reverse), fichiers de zone (SOA/NS/A/AAAA/PTR), journalisation.
+Ouvrir 53/udp+tcp au LAN; tester avec dig/host; vérifier le cache et les TTL.
+BIND: spécificités en frontal Internet
+
+Authoritative‑only; recursion no; minimal‑responses yes; RRL.
+allow‑transfer avec TSIG; limiter notify; masquer version.
+DNSSEC: signer la zone (ZSK/KSK), publier DS chez le registrar, planifier les rollovers.
+Dépannage et reconnaissance DNS
+
+Outils: dig/host/kdig (résolution, +trace, +dnssec, @serveur, enregistrements spécifiques, reverse).
+Vérifs: recursion ouverte/fermée, transferts de zone, latence/TTL, cohérence NS/SOA, version.bind CHAOS TXT (fingerprint).
+Nmap scripts: enum DNS, détection de recursion/transferts, brute force de sous‑domaines (usage encadré).
+DoH (DNS over HTTPS)
+
+Requêtes DNS encapsulées en HTTPS (443/tcp): confidentialité et traversée de proxy; visibilité réseau réduite.
+En entreprise: arbitrer entre vie privée et contrôle (politiques egress, proxies DNS).
+DoT (DNS over TLS)
+
+DNS chiffré sur TLS (853/tcp): confidentialité, plus facile à filtrer que DoH.
+Déploiement: résolveur local → résolveur amont DoT; certificats valides; performance/timeout à tester.
+knot-dnsutils
+
+Suite d’outils alternative à bind-utils: kdig (équivalent dig, support DNSSEC/DoT), knsupdate (MAJ dynamiques), kzonecheck (validation zones).
+Implémentation de DoT dans Nmap (vérification)
+
+Scanner 853/tcp (TLS) pour valider exposition/certificats/ban nières; scripts/sondes TLS de Nmap utiles à l’inventaire.
+DNSSEC (principes)
+
+Authentification de données DNS via signatures (RRSIG, DNSKEY) et chaîne de confiance (DS).
+Côté autoritatif: signer les zones, gérer rollovers (ZSK/KSK), NSEC/NSEC3.
+Côté récursif: activer la validation; surveiller les échecs de validation et la dérive d’horloge.
+À retenir
+
+Choisir le rôle (récursif vs autoritatif) et configurer en « moindre fonctionnalité ».
+Interne: récursion + cache + ACL; Externe: autoritatif‑only, transferts sécurisés, RRL, DNSSEC.
+Maîtriser dig/kdig pour diagnostiquer; connaître DoH/DoT et leurs impacts opérationnels.
+Questions (exemples)
+
+Différences DoH vs DoT et implications pour une politique réseau d’entreprise ?
+Quelles options BIND basculer pour rendre un serveur sûr en Internet‑facing (recursion, RRL, DNSSEC) ?
+Comment tester transferts de zone, recursion et validation DNSSEC avec dig/kdig ?
+Lectures complémentaires (pistes)
+
+Documentation BIND/Unbound/NSD/Knot DNS.
+Guides CIS Benchmarks pour DNS/BIND.
+Références DNSSEC (concepts RRSIG/DNSKEY/DS, NSEC/NSEC3).
+Nmap NSE pour DNS et outils knot-dnsutils (kdig/knsupdate/kzonecheck).
