@@ -1,0 +1,125 @@
+Problématique
+
+Vous devez déployer sur un hôte Linux un “sondeur réseau” automatisé en Bash qui:
+Détecte des services mal configurés ou malveillants sur le LAN (serveurs DHCP/ DNS non autorisés).
+Vérifie la santé réseau locale (interfaces, routes, MTU) et l’exposition (ports à l’écoute).
+Valide la résolution DNS (récursion, DoT/DoH, DNSSEC).
+Journalise, alerte et lance une capture PCAP ciblée en cas d’anomalie.
+Contrainte: solution 100% Linux/Bash, réutilisant les briques et méthodes vues (ip/nmcli, ss/lsof, nftables, tcpdump, nmap, dig/kdig, rsyslog).
+Objectifs mesurables
+
+Détection fiable d’un serveur DHCP “rogue” en <60s (alerte syslog + preuve PCAP).
+Validation périodique DNS (résolution, DNSSEC, DoT), alerte si échec.
+Audit local d’exposition (seulement les ports autorisés à l’écoute) avec rapport succinct.
+Pré-requis
+
+Ubuntu LTS (sudo), NTP correct.
+Paquets: nftables, nmap, tcpdump, dnsutils (dig), knot-dnsutils (kdig), rsyslog, lsof, iproute2.
+Variables d’environnement à définir: interface à sonder (ex: ens33), liste des serveurs DHCP/DNS autorisés.
+Architecture (vue rapide)
+
+Détection active: nmap (broadcast-dhcp-discover), dig/kdig.
+Détection passive: nftables (compteurs + logs sur DHCP offers non autorisés).
+Réaction: logger (syslog), rotation PCAP (tcpdump -G/-W).
+Rapport: audit des ports (ss/lsof), état IP/MTU (ip/nmcli).
+Plan de résolution (Bash modulaire)
+
+Variables (à adapter)
+IFACE="ens33"
+AUTH_DHCP=("192.168.10.2") liste blanche DHCP
+AUTH_DNS=("192.168.10.10" "1.1.1.1") résolveurs attendus
+CAP_DIR="/var/log/net-captures" stockage PCAP (droits/quotas à prévoir)
+Journalisation
+log() { logger -t net-sensor "
+(date '+%F %T') $1"; }
+Hygiène interface/routage/MTU (chap. 2)
+ip -4 a show dev "$IFACE"; ip r
+nmcli -g GENERAL.STATE,IP4.ADDRESS device show "$IFACE"
+Test MTU si suspicion tunnel/VPN: ping -M do -s 1472 8.8.8.8 (adapter la taille) ; ajuster si besoin via nmcli con mod "Wired connection 1" 802-3-ethernet.mtu 1400 puis nmcli con up "…"
+Pare-feu de détection (nftables) (chap. 4)
+Installer/activer nftables: apt-get -y install nftables ; systemctl enable --now nftables
+Règles minimales de journalisation DHCP “offer” non autorisés (UDP sport 67) sur l’interface:
+Définir un set d’IP autorisées; journaliser + compter si source ∉ set
+Exemple de logique: udp sport 67 iif "$IFACE" ip saddr != { AUTH_DHCP } counter log prefix "ROGUE_DHCP " accept
+Vérif: nft list ruleset ; suivre les logs: journalctl -k | grep ROGUE_DHCP
+Audit d’exposition local (chap. 3)
+ss -tupln liste des ports à l’écoute; comparer à la liste attendue (ex: 22 uniquement)
+lsof -i :22 vérifier le processus SSH; lsof -i -P -n snapshot global
+Si ports inattendus: log "Port inattendu: …" et alerte
+Détection active d’un serveur DHCP rogue (chap. 7)
+nmap --script broadcast-dhcp-discover -e "$IFACE" récupère les offres
+Parser les IP serveur offertes; comparer à AUTH_DHCP; si inconnue:
+log "ALERTE: serveur DHCP non autorisé détecté: X.X.X.X"
+lancer capture ciblée: tcpdump -ni "
+CAP_DIR/dhcp-%Y%m%d-%H%M.pcap"
+Vérifications DNS (chap. 6)
+dig +short A www.example.com @${AUTH_DNS[0]} ; tester la récursion (résolution d’un domaine externe)
+dig +dnssec +multi www.nic.cz @${AUTH_DNS[0]} vérifier présence du bit AD (validation DNSSEC)
+kdig @1.1.1.1 +tls-ca +tls-host=cloudflare-dns.com tester DoT (853/tcp)
+Test DoH (si un endpoint interne est requis): curl -sS -H 'accept: application/dns-json' 'https://resolver.example/dns-query?name=example.com&type=A'
+Si échec (NXDOMAIN anormal / pas de AD / DoT KO): log "ALERTE DNS: validation/connexion échec", lancer capture: tcpdump -ni "
+CAP_DIR/dns-%Y%m%d-%H%M.pcap"
+Capture à la demande et rotation (chap. 11)
+Créer CAP_DIR; privilégier -w (fichier), -s 0, -nn et rotation (-G 60 -W 5) pour limiter l’espace
+capinfos/mergecap/editcap pour post-traiter si nécessaire
+Alerte et centralisation (chap. 12)
+logger envoie au syslog local; configurer rsyslog pour relayer vers le SIEM central:
+Activer imudp/imtcp côté collecteur; ajouter sur l’hôte: . @@syslog-central:514
+Créer des règles d’alerte (mot-clé ROGUE_DHCP, DNS_FAIL) côté SIEM/rsyslog
+Rapport “état court” (une page)
+ip -4 a dev "$IFACE" | sed -n '1,5p'
+ip r get 8.8.8.8 route par défaut effective
+ss -tuln | awk '{print 
+5}' ports ouverts
+Derniers compteurs nft: nft list ruleset | grep -A1 ROGUE_DHCP
+Résumé DNS: dig one-liners + statut DoT/DoH
+Script Bash – squelette exécutable (sans blocs de code)
+
+Vérifier root/sudo; apt-get update; installer dépendances (nftables nmap tcpdump dnsutils knot-dnsutils rsyslog lsof)
+Définir IFACE/AUTH_DHCP/AUTH_DNS/CAP_DIR; créer répertoires/logs
+Appliquer règles nftables de détection DHCP rogue
+Lancer séquentiellement:
+check_iface() → ip/nmcli/ping MTU
+check_ports() → ss/lsof vs whitelist
+dhcp_probe() → nmap broadcast-dhcp-discover; si inconnu → alert + tcpdump DHCP
+dns_checks() → dig +dnssec ; kdig +tls ; curl DoH ; si KO → alert + tcpdump DNS
+short_report() → imprimer état de synthèse
+Planifier via cron ou systemd timer (toutes les 5–10 minutes selon besoin)
+Démonstration et vérifications
+
+Simuler un “rogue DHCP” (ex: activer un service DHCP sur un poste de test):
+Attendu: journal ROGUE_DHCP, création de PCAP dhcp-…pcap; alerte SIEM
+Casser la validation DNSSEC (pointer vers un résolveur sans validation):
+Attendu: dig ne remonte pas AD; alerte DNS_FAIL; PCAP dns-…pcap
+Ouvrir un port non prévu (ex: nc -l -p 8080):
+Attendu: ss/lsof détecte 8080; log “Port inattendu: 8080”
+MTU/tunnel: réduire MTU via nmcli; ping -M do reflète la fragmentation/échec; ajuster et revalider
+Sécurité et durcissement (rappels utiles)
+
+Pare-feu hôte par défaut restrictif (nftables): ouvrir seulement SSH (restreint), syslog sortant, DNS sortant; journaliser les drops
+Durcir SSH (CIS): PermitRootLogin no, Protocol 2, clés/mots de passe, MaxAuthTries, bannière, timeouts
+Comptes et mises à jour régulières; synchronisation NTP
+Intégrations/évolutions
+
+Exporter métriques (counters nft, stats tcpdump) vers Prometheus/node_exporter
+Suricata en IDS passif sur SPAN/TAP pour compléter (eve.json, JA3, DNS logs)
+DShield: soumettre les événements de scans/ports (si positionné en DMZ)
+Pourquoi cette solution répond à la problématique avec le contenu du livre
+
+Interfaces, routes, MTU: ip/nmcli (chap. 2)
+Audit d’exposition: ss/netstat/lsof; 5‑tuple/TCP states (chap. 3)
+Pare-feu et journalisation: nftables (chap. 4)
+DHCP: DORA, détection rogue, captures ciblées (chap. 7)
+DNS: récursif/autoritatif, dig/kdig, DoT/DoH, DNSSEC (chap. 6)
+Captures: tcpdump, filtres BPF, performance/rotation (chap. 11)
+Syslog/alertes: rsyslog, analyse de journaux (chap. 12)
+Honeypot léger (option): netcat/portspoof pour capter scans (chap. 14)
+Pitfalls et remédiations
+
+Paquets manquants: vérifier apt/pare-feu sortant; logs d’installation
+Interfaces mal nommées: ip link show pour trouver l’IFACE correct
+Droits/quotas disques: limiter PCAP via rotation et nettoyage; capinfos pour tailles
+Faux positifs DHCP: enrichir la whitelist ou matcher OUI MAC des équipements autorisés
+Résultat attendu
+
+Un unique script Bash, programmé périodiquement, qui surveille activement et passivement l’hygiène réseau locale, détecte les serveurs DHCP/DNS non autorisés, valide la pile DNS (incl. TLS/DNSSEC), audite l’exposition, alerte via Syslog/SIEM et capture des preuves exploitables pour le dépannage et la réponse à incident.
