@@ -85,6 +85,3 @@ Tester les modifications hors production (VM, snapshots), documenter (nmcli comm
 ip et nmcli couvrent l’essentiel: affichage, adresses, routes, MTU, activation.
 Comprendre IPv4/CIDR, adresses spéciales et RFC1918 est indispensable au dépannage.
 Persistance des configs: nmcli simplifie; les méthodes héritées varient selon la distribution.
-
-Bookmark message
-Copy message
