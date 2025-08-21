@@ -1,0 +1,102 @@
+8 Services de certificats sur Linux
+
+Objectif du chapitre
+
+Démystifier les certificats X.509 et leur chaîne de confiance.
+Mettre en place, utiliser et sécuriser des certificats sous Linux (serveur web, CA privée).
+Automatiser le cycle de vie via ACME et savoir auditer/exploiter la visibilité (CT logs).
+Disposer d’une fiche mémo OpenSSL pour les opérations courantes.
+Exigences techniques
+
+Hôte/VM Linux avec droits sudo.
+Outils: openssl, serveur web (Nginx/Apache), client ACME (ex: certbot, acme.sh).
+Accès DNS/HTTP selon la méthode de validation choisie.
+Que sont les certificats ?
+
+Certificats X.509 = identité + clé publique signées par une Autorité de Certification (AC).
+Chaîne de confiance: certificat serveur → intermédiaire(s) → racine (trust store).
+Paramètres clés: SAN (Subject Alternative Name), algorithmes (RSA/ECDSA), usages (KU/EKU), dates de validité.
+Acquérir un certificat
+
+Via une AC publique (validation de domaine: HTTP‑01, DNS‑01, TLS‑ALPN‑01).
+Via une AC privée (interne) pour usages internes (VPN, RADIUS, mTLS, admin).
+Bonnes pratiques: clés générées côté serveur, taille/algorithme adaptés, SAN exhaustifs mais minimisés.
+Utilisation d’un certificat – exemple serveur web
+
+Installer clé privée + cert + chaîne intermédiaire; configurer le vhost (Nginx/Apache).
+Activer TLS 1.2/1.3, suites chiffrées robustes, HSTS, OCSP Stapling.
+Sécuriser la clé privée (droits d’accès), rechargement gracieux post‑renouvellement.
+Construire une autorité de certification privée
+
+Architecture recommandée: Root CA hors‑ligne + Intermediate CA(s) en ligne.
+Composants: politique, procédures (key ceremony), CRL/OCSP, journalisation.
+Stockage de clés: HSM ou au minimum coffre chiffré/air‑gap pour la racine.
+Construire une CA avec OpenSSL
+
+Arborescence de CA (index.txt, serial, crl, certs/, private/).
+Paramétrage openssl.cnf (policies, extensions, chemins).
+Génération des paires de clés (root/intermediate), auto‑signature racine, signature de l’intermédiaire.
+Demander et signer un CSR
+
+Côté demandeur: génération clé + CSR (sujets/SAN).
+Côté AC: vérifications (policy), signature du CSR, émission du cert + publication CRL/OCSP.
+Vérifications: empreintes, correspondance clé/cert, chaîne complète.
+Sécuriser votre infrastructure d’AC
+
+Conseils « hérités » éprouvés:
+Racine hors‑ligne, accès physique/logiciel contrôlé, backups chiffrés.
+Procédures formalisées (délégation, révocation, rotation), journalisation.
+Conseils « modernes »:
+Minimiser durée de vie des certificats (90 j/≤1 an), automatiser renouvellements.
+Mécanismes CT/OCSP stapling, surveillance continue, zero‑trust/mTLS où pertinent.
+Risques spécifiques en environnements modernes
+
+Compromission/ fuite des clés (serveur, AC, DNS/API d’automatisation).
+Mauvaise validation ACME (prise de contrôle DNS/HTTP), wildcard trop large.
+Exposition d’infos sensibles via CT (sous‑domaines internes), erreurs d’inventaire/expiration.
+Transparence des certificats (CT)
+
+Journaux publics des certificats TLS émis par ACs publiques.
+Usages:
+Détection de certificats émis à votre insu.
+Inventaire/veille des sous‑domaines; suivi des expirations.
+Outils: crt.sh, Censys, Google CT logs, APIs.
+Inventaire et reconnaissance via l’AC/CT
+
+Cartographier vos actifs (domaines, SAN), vérifier la cohérence des émetteurs/algos.
+Intégrer les données CT à votre CMDB/monitoring (alertes d’émission/expiration).
+Automatisation (ACME)
+
+Protocole ACME (ex: Let’s Encrypt) pour émettre/renouveler automatiquement.
+Défis:
+HTTP‑01 (fichier/.well-known), DNS‑01 (enregistrement TXT, idéal wildcard), TLS‑ALPN‑01.
+Clients: certbot, acme.sh, lego; hooks de reload de services.
+Bonnes pratiques: comptes ACME dédiés, secrets CI/CD, contrôles DNS/API, observabilité.
+Feuille de triche OpenSSL (exemples utiles)
+
+Générer une clé RSA/ECDSA:
+RSA: openssl genrsa -out privkey.pem 3072
+EC: openssl ecparam -name prime256v1 -genkey -noout -out privkey.pem
+CSR: openssl req -new -key privkey.pem -out req.csr -addext "subjectAltName=DNS:exemple.com,DNS:www.exemple.com"
+Auto‑sign (test): openssl x509 -req -in req.csr -signkey privkey.pem -days 365 -out cert.pem
+Inspecter: openssl x509 -in cert.pem -noout -text
+Vérifier chaîne: openssl verify -CAfile chain.pem cert.pem
+Tester TLS: openssl s_client -connect site:443 -servername site -showcerts
+Vérifier correspondance clé/cert: openssl pkey -in privkey.pem -pubout | sha256sum vs openssl x509 -in cert.pem -pubkey -noout | sha256sum
+À retenir
+
+Favoriser une CA racine hors‑ligne et des certificats courte durée avec renouvellement automatisé.
+Sécuriser la clé privée et la chaîne; activer TLS moderne et bonnes pratiques (HSTS, OCSP stapling).
+Surveiller via CT/OCSP; limiter la portée (SAN/wildcard) et durées de validité.
+OpenSSL reste l’outil indispensable pour générer, signer, auditer et dépanner.
+Questions (exemples)
+
+Quand privilégier DNS‑01 plutôt que HTTP‑01 pour ACME ?
+Quelles mesures minimisent l’impact d’une compromission de clé serveur ?
+Comment organiser une CA privée robuste (root offline, intermédiaires, CRL/OCSP) ?
+Comment exploiter les CT logs pour l’inventaire et la détection d’émissions non autorisées ?
+Lectures complémentaires (pistes)
+
+Documentation OpenSSL, guides ACME (Let’s Encrypt/certbot/acme.sh).
+Bonnes pratiques TLS (Mozilla SSL/TLS guidelines).
+CT (RFC 6962), OCSP/CRL (X.509), durcissement serveurs web (Nginx/Apache).
