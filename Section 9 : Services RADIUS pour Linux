@@ -1,0 +1,83 @@
+9 Services RADIUS pour Linux
+Objectif du chapitre
+
+Comprendre RADIUS comme brique AAA (authentification, autorisation, accounting) pour VPN, Wi‑Fi 802.1X, filaire 802.1X et accès aux équipements réseau.
+Mettre en place FreeRADIUS sous Linux avec différentes sources d’identité (local, LDAP/LDAPS, Active Directory/NTLM).
+Écrire des politiques avec Unlang, activer EAP‑TLS, et intégrer une MFA (Google Authenticator).
+Exigences techniques
+
+Hôte/VM Linux avec sudo, FreeRADIUS installé et activé.
+Accès réseau vers annuaires (LDAP/AD) et équipements NAS (AP Wi‑Fi, switchs, VPN).
+PKI opérationnelle pour EAP‑TLS (AC interne ou publique), NTP fiable.
+Outils de test: radtest/radiusd -X (mode debug), eapol_test (supplicant).
+Bases de RADIUS – principes et fonctionnement
+
+Modèle client/serveur: les « clients RADIUS » sont les NAS (VPN, AP, switch), pas les utilisateurs.
+Messages principaux:
+Auth: Access‑Request / Access‑Accept / Access‑Reject (port UDP 1812).
+Accounting: Start / Interim‑Update / Stop (port UDP 1813).
+Sécurité:
+Secret partagé par NAS; intégrité/obfuscation du mot de passe (PAP) ; préférer transports chiffrés côté annuaire (LDAPS).
+Attributs/AVP: standard + Vendor‑Specific (VSA) pour politiques fines (rôles, VLAN, ACL, classes).
+Implémenter RADIUS avec authentification Linux locale
+
+Modules FreeRADIUS « files »/« pap » et Users file pour comptes/tests simples.
+Utilisation adaptée aux labs, équipements isolés ou comptes de secours.
+RADIUS avec backend LDAP/LDAPS
+
+FreeRADIUS comme proxy d’auth vers LDAP/AD (bind simple ou recherche + bind utilisateur).
+Bonnes pratiques: LDAPS/TLS, filtres de recherche restrictifs, mappage attributs (groupes→politiques), timeouts et reprise.
+Authentification NTLM (AD) – CHAP/MS‑CHAPv2
+
+Intégration AD via winbind/ntlm_auth (MS‑CHAPv2 pour VPN/Wi‑Fi PEAP‑MSCHAPv2).
+CHAP/MS‑CHAPv2 = défi/réponse (pas de mot de passe en clair sur le fil).
+Préférer EAP‑TLS quand possible (plus sûr, sans dépendre de mots de passe).
+Unlang – le langage de politiques
+
+DSL de FreeRADIUS pour conditionner le flux authorize/authenticate/accounting.
+if/else, update control/reply, vérification d’attributs (NAS‑IP‑Address, Calling‑Station‑Id, groupes LDAP), renvoi d’attributs (VLAN, Filter‑Id).
+Centralise la logique d’accès par contexte (type de NAS, groupe utilisateur, heure/jour).
+Scénarios d’utilisation RADIUS
+
+Authentification VPN (ID + mot de passe): firewall/VPN→RADIUS→(LDAP/AD/locaux) + renvoi d’attributs (Class, Framed‑IP‑Address, ACL).
+Accès administratif aux équipements réseau: contrôle centralisé, rôles via VSA (ex. privilege‑level), journalisation des connexions.
+EAP‑TLS (certificats) – configuration RADIUS
+
+Auth forte par certificats client/serveur; nécessite AC, distribution de certs aux postes/terminaux.
+FreeRADIUS: activer eap/tls, chaînes de confiance, CRL/OCSP (optionnel), profils par SSID/NAS.
+802.1X/EAP‑TLS – Wi‑Fi
+
+AP en « authenticator », station en « supplicant », RADIUS en « server ».
+Profil SSID WPA2‑Enterprise/WPA3‑Enterprise; renvoi VLAN/ACL dynamiques via attributs.
+802.1X/EAP‑TLS – filaire
+
+Contrôle d’accès port‑par‑port sur switchs (EAPOL); fallback MAB pour équipements non 802.1X.
+Stratégies d’isolement (VLAN invité/quarantaine), NAC possible via attributs RADIUS.
+MFA avec Google Authenticator et RADIUS
+
+Intégration via PAM/rlm_pam, rlm_exec/rlm_perl (OTP concaténé ou deuxième facteur).
+Enrôlement des secrets TOTP, politiques d’exception, synchronisation temps (NTP).
+Bonnes pratiques
+
+Secrets RADIUS forts et distincts par NAS; restreindre clients par IP; firewall 1812/1813.
+Haute dispo: plusieurs serveurs RADIUS (primary/secondary), bascule NAS configurée.
+Sécuriser annuaire: LDAPS, comptes de service à privilèges minimaux, timeouts.
+Journaux et accounting centralisés; supervision des taux/erreurs; tests réguliers (radtest/eapol_test).
+Préférer EAP‑TLS pour Wi‑Fi/filaire; limiter MS‑CHAPv2 aux cas hérités; bannir PAP/CHAP en clair.
+À retenir
+
+RADIUS centralise AAA pour VPN, Wi‑Fi/Filaire 802.1X et accès admin aux équipements.
+FreeRADIUS est flexible: sources d’identité variées + Unlang pour politiques contextuelles.
+La robustesse passe par EAP‑TLS, intégration sûre à LDAP/AD, journaux/accounting et redondance.
+Questions (exemples)
+
+Quand choisir EAP‑TLS plutôt que PEAP‑MSCHAPv2 pour un réseau Wi‑Fi d’entreprise ?
+Comment mapper des groupes LDAP/AD en rôles RADIUS avec Unlang ?
+Quelles mesures protègent contre un NAS mal configuré ou compromis (secrets, restrictions client, logs) ?
+Quelles sont les étapes pour activer une MFA TOTP avec FreeRADIUS et Google Authenticator ?
+Lectures complémentaires (pistes)
+
+FreeRADIUS: documentation officielle (modules, Unlang, EAP).
+RFC 2865 (RADIUS), RFC 2866 (Accounting), RFC 5216 (EAP‑TLS), 802.1X.
+Guides d’intégration LDAP/LDAPS et AD (winbind/ntlm_auth).
+Bonnes pratiques WPA2/WPA3‑Enterprise et déploiements 802.1X (Wi‑Fi et filaire).
