@@ -1,2 +1,282 @@
 https://github.com/Depredador-cloud/Reseau_Linux/issues/1#issue-3342836430
 
+A
+AAA (Authentication, Authorization, and Accounting)
+Un cadre pour contrôler intelligemment l'accès aux ressources informatiques, appliquer des politiques, auditer l'utilisation et fournir les informations nécessaires pour facturer les services.
+
+L'authentification prouve l'identité, l'autorisation détermine à quoi vous avez accès, et l'accounting (comptabilité) suit l'utilisation des ressources.
+
+ACME (Automated Certificate Management Environment)
+Un protocole utilisé pour automatiser le processus de demande, de vérification et d'émission de certificats numériques, principalement popularisé par Let's Encrypt.
+
+ACL (Access-Control List)
+Une liste de permissions attachée à un objet. Dans le contexte réseau, elle est utilisée pour contrôler quel trafic est autorisé ou refusé.
+
+AppArmor
+Un module de sécurité Linux (LSM) qui restreint les capacités des programmes selon un ensemble de profils, en utilisant les chemins de fichiers pour appliquer des contrôles d'accès obligatoires.
+
+API (Application Programming Interface)
+Un ensemble de règles et d'outils permettant à différentes applications logicielles de communiquer entre elles. Dans le contexte du cloud, les API permettent d'automatiser le provisionnement et la maintenance de l'infrastructure.
+
+ARP (Address Resolution Protocol)
+Un protocole de couche 2 utilisé pour faire correspondre une adresse IP (couche 3) à une adresse MAC physique (couche 2) sur un réseau local.
+
+ARP Cache Poisoning
+Une attaque où un acteur malveillant envoie de faux paquets ARP sur un réseau local pour associer son adresse MAC à l'adresse IP d'un autre hôte, lui permettant d'intercepter, de modifier ou d'arrêter le trafic.
+
+B
+BIND (Berkeley Internet Name Domain)
+Le logiciel de serveur DNS le plus couramment implémenté sous Linux, également connu sous le nom de
+
+named (name daemon).
+
+BPF (Berkeley Packet Filter)
+Une technologie utilisée dans les systèmes d'exploitation de type Unix pour analyser le trafic réseau. Elle fournit une syntaxe pour créer des filtres qui sélectionnent les paquets à capturer.
+
+C
+CA (Certificate Authority)
+Une entité qui émet des certificats numériques. Un certificat atteste de la propriété d'une clé publique par le sujet nommé du certificat, créant ainsi un lien de confiance.
+
+CDP (Cisco Discovery Protocol)
+Un protocole propriétaire de couche 2 utilisé par les équipements Cisco pour partager des informations sur d'autres équipements Cisco directement connectés.
+
+CHAP (Challenge-Handshake Authentication Protocol)
+Un protocole d'authentification où le serveur envoie un "défi" (challenge) au client, qui doit le combiner avec son mot de passe et le hasher avant de le renvoyer, évitant ainsi la transmission du mot de passe en clair.
+
+CIS (Center for Internet Security)
+Une organisation qui publie des benchmarks de sécurité et des contrôles critiques largement reconnus pour aider les organisations à sécuriser leurs systèmes et leurs données.
+
+Cowrie
+Un honeypot SSH et Telnet de moyenne interaction conçu pour enregistrer les attaques par force brute et l'interaction de l'attaquant avec le shell.
+
+CRL (Certificate Revocation List)
+Une liste de certificats numériques qui ont été révoqués par l'Autorité de Certification émettrice avant leur date d'expiration prévue. C'est une méthode plus ancienne que l'OCSP.
+
+CSR (Certificate Signing Request)
+Un message chiffré envoyé d'un demandeur à une autorité de certification pour demander un certificat d'identité numérique. Il contient des informations d'identification et la clé publique du demandeur.
+
+CT (Certificate Transparency)
+Un système où les certificats SSL/TLS émis par les autorités de certification publiques sont publiés dans des journaux publics. Cela permet aux propriétaires de domaines de détecter les certificats émis à leur insu et d'auditer les AC.
+
+D
+DAI (Dynamic ARP Inspection)
+Une fonctionnalité de sécurité sur les commutateurs réseau qui valide les paquets ARP dans un réseau. Elle intercepte, enregistre et rejette les paquets ARP avec des liaisons adresse IP/adresse MAC invalides pour prévenir les attaques de type "man-in-the-middle".
+
+DHCP (Dynamic Host Configuration Protocol)
+Un protocole de gestion de réseau utilisé pour attribuer automatiquement des adresses IP et d'autres paramètres de communication réseau (comme le masque de sous-réseau et la passerelle par défaut) aux appareils sur un réseau.
+
+DHCP Snooping
+Une fonctionnalité de sécurité de couche 2 sur les commutateurs réseau qui filtre les messages DHCP en ne faisant confiance qu'aux ports explicitement configurés pour transmettre les messages du serveur DHCP, protégeant ainsi contre les serveurs DHCP non autorisés (rogue).
+
+DMZ (Demilitarized Zone)
+Un périmètre réseau qui protège le réseau local interne d'une organisation contre un réseau non fiable, généralement Internet. Tout service exposé au public est placé dans la DMZ.
+
+DNS (Domain Name System)
+Le système hiérarchique et décentralisé utilisé pour traduire les noms de domaine lisibles par l'homme (ex:
+
+www.google.com) en adresses IP numériques nécessaires pour localiser les services informatiques et les appareils dans le monde entier.
+
+DNSSEC (DNS Security Extensions)
+Une suite de spécifications pour sécuriser certaines informations fournies par le DNS. Elle permet de vérifier l'authenticité et l'intégrité des réponses DNS grâce à des signatures numériques basées sur des certificats de zone.
+
+DoH (DNS over HTTPS)
+Un protocole pour effectuer des requêtes DNS via le protocole HTTPS. Les requêtes sont formatées comme des appels API et sont chiffrées, ce qui améliore la confidentialité et la sécurité en masquant les requêtes DNS dans le trafic HTTPS normal.
+
+DORA (Discover, Offer, Request, Acknowledgement)
+L'acronyme décrivant la séquence en quatre étapes d'une transaction DHCP entre un client et un serveur.
+
+DoT (DNS over TLS)
+Un protocole de sécurité pour chiffrer les requêtes et les réponses DNS via le protocole Transport Layer Security (TLS). Il utilise généralement le port TCP 853 pour établir une connexion sécurisée.
+
+DSCP (Differentiated Services Code Point)
+Un champ de 6 bits dans l'en-tête d'un paquet IP utilisé pour la classification et la gestion du trafic réseau (Qualité de Service).
+
+DSR (Direct Server Return)
+Une méthode d'équilibrage de charge où le trafic entrant passe par l'équilibreur de charge, mais le trafic sortant est renvoyé directement du serveur au client, contournant l'équilibreur de charge pour réduire sa charge.
+
+E
+EAP (Extensible Authentication Protocol)
+Un cadre d'authentification fréquemment utilisé dans les réseaux sans fil et les connexions point à point. Il fournit un moyen de transmettre diverses méthodes d'authentification (comme les certificats avec EAP-TLS).
+
+Egress Filter
+Une politique de pare-feu appliquée au trafic sortant d'un réseau pour empêcher les utilisateurs ou les logiciels malveillants d'envoyer du trafic non autorisé vers l'extérieur.
+
+Ettercap
+Un outil de sécurité utilisé pour les attaques de type "man-in-the-middle" sur un réseau local. Il peut être utilisé pour l'empoisonnement du cache ARP et la capture de trafic en temps réel.
+
+H
+HAProxy
+Un logiciel open-source populaire qui fournit un équilibreur de charge TCP/HTTP haute disponibilité et un serveur proxy pour les applications basées sur TCP et HTTP.
+
+Honeypot
+Un mécanisme de sécurité informatique destiné à détecter, dévier ou, d'une manière ou d'une autre, contrer les tentatives d'utilisation non autorisée des systèmes d'information. Il s'agit d'un serveur ou d'un service factice conçu pour attirer les attaquants et enregistrer leurs activités.
+
+HSM (Hardware Security Module)
+Un appareil informatique physique qui protège et gère les clés numériques pour une authentification forte et assure le traitement cryptographique. Il est utilisé pour stocker de manière sécurisée la clé privée d'une AC.
+
+I
+IETF (Internet Engineering Task Force)
+L'organisation qui développe et promeut des normes Internet volontaires, en particulier les normes qui composent la suite de protocoles Internet (TCP/IP). Elle publie les documents RFC.
+
+Ingress Filter
+Une politique de pare-feu appliquée au trafic entrant dans un réseau pour se protéger contre les menaces externes.
+
+IPFIX (IP Flow Information eXport)
+Un protocole IETF standard pour l'exportation d'informations sur les flux de trafic IP à partir des routeurs et autres périphériques réseau. Il est largement basé sur la version 9 de NetFlow de Cisco.
+
+IPS (Intrusion Prevention System)
+Un système de sécurité réseau qui surveille le trafic réseau ou les activités du système pour détecter les activités malveillantes et peut bloquer ou empêcher ces activités.
+
+iptables
+L'application pare-feu traditionnelle de l'espace utilisateur pour Linux. Elle permet de configurer les tables fournies par le pare-feu du noyau Linux et les chaînes et règles qu'elles stockent.
+
+J
+JA3
+Une méthode pour créer des empreintes digitales de clients SSL/TLS qui est facile à produire et à partager. Elle permet de détecter des logiciels malveillants ou des applications spécifiques basées sur la manière dont ils initient une session TLS, sans nécessiter de déchiffrement.
+
+L
+LibreNMS
+Un système de surveillance de réseau open-source basé sur PHP/MySQL/SNMP qui inclut la prise en charge d'un large éventail de matériel réseau et de systèmes d'exploitation.
+
+LLDP (Link Layer Discovery Protocol)
+Un protocole de couche 2 indépendant du fournisseur, utilisé par les périphériques réseau pour annoncer leur identité, leurs capacités et leurs voisins sur un réseau local.
+
+M
+MAC Address (Media Access Control Address)
+Un identifiant unique assigné aux interfaces réseau pour les communications sur le segment de réseau physique (couche 2). Il s'agit d'une adresse de 48 bits représentée en notation hexadécimale.
+
+MiTM (Man-in-the-Middle)
+Une cyberattaque où l'attaquant relaie secrètement et éventuellement altère la communication entre deux parties qui croient communiquer directement entre elles.
+
+MSS (Maximum Segment Size)
+La plus grande quantité de données, spécifiée en octets, qu'un ordinateur ou un périphérique de communication peut recevoir dans un seul segment TCP. Elle n'inclut pas l'en-tête TCP ou l'en-tête IP.
+
+MTU (Message Transfer Unit)
+La taille de la plus grande unité de données de protocole (PDU) qu'une couche de communication peut transmettre. C'est la taille maximale d'une trame sur le support.
+
+N
+NAT (Network Address Translation)
+Une méthode de remappage d'un espace d'adresses IP dans un autre en modifiant les informations d'adresse réseau dans les en-têtes de paquets IP pendant qu'ils transitent par un périphérique de routage. C'est couramment utilisé pour permettre à plusieurs appareils sur un réseau local d'accéder à Internet en utilisant une seule adresse IP publique.
+
+NAS (Network Access Server)
+Dans le contexte de RADIUS, un périphérique qui fournit un point d'accès à un réseau. Il peut s'agir d'un concentrateur VPN, d'un point d'accès sans fil ou d'un commutateur qui demande une authentification au serveur RADIUS.
+
+NetFlow
+Un protocole réseau, développé par Cisco, pour collecter des informations sur le trafic IP lorsqu'il entre ou sort d'une interface. Les données de flux sont ensuite exportées vers un collecteur pour analyse.
+
+nftables
+Le sous-système du noyau Linux qui fournit le filtrage et la classification des paquets, et le successeur désigné de iptables. Il offre une syntaxe plus simple et de meilleures performances.
+
+NMS (Network Management System)
+Un système qui surveille et gère les périphériques d'un réseau informatique, généralement à l'aide de protocoles comme SNMP.
+
+O
+OCSP (Online Certificate Status Protocol)
+Un protocole Internet utilisé pour obtenir l'état de révocation d'un certificat numérique X.509. C'est une alternative plus efficace que les listes de révocation de certificats (CRL).
+
+OSI Model (Open Systems Interconnection Model)
+Un modèle conceptuel qui divise les fonctions de communication d'un système de réseau en sept couches d'abstraction, de la couche physique (câbles) à la couche application (logiciel de l'utilisateur final).
+
+OUI (Organizationally Unique Identifier)
+Les 24 premiers bits (ou 3 premiers octets) d'une adresse MAC, qui identifient de manière unique le fabricant ou le fournisseur du matériel réseau.
+
+P
+PAC (Proxy Auto-Configuration)
+Un fichier qui définit comment les navigateurs web et autres agents utilisateurs peuvent automatiquement choisir le serveur proxy approprié (méthode d'accès) pour récupérer une URL donnée. Utilisé dans les attaques WPAD.
+
+PAM (Pluggable Authentication Modules)
+Un ensemble de bibliothèques qui permettent à un administrateur système local de choisir comment les applications authentifient les utilisateurs.
+
+PEAP (Protected Extensible Authentication Protocol)
+Une méthode pour encapsuler EAP dans un tunnel TLS chiffré et sécurisé. Elle est couramment utilisée dans les réseaux sans fil pour authentifier les utilisateurs avec un nom d'utilisateur et un mot de passe.
+
+PKI (Public Key Infrastructure)
+L'ensemble du matériel, des logiciels, des personnes, des politiques et des procédures nécessaires pour créer, gérer, distribuer, utiliser, stocker et révoquer des certificats numériques et gérer le chiffrement à clé publique.
+
+Portspoof
+Un outil de sécurité conçu pour améliorer la sécurité d'un système en rendant les scans de ports plus difficiles. Il émule des services sur tous les ports TCP ouverts, renvoyant des bannières de service pour tromper les scanners.
+
+R
+RADIUS (Remote Authentication Dial-In User Service)
+Un protocole de mise en réseau client-serveur qui fournit une gestion centralisée de l'authentification, de l'autorisation et de la comptabilité (AAA) pour les utilisateurs qui se connectent et utilisent un service réseau.
+
+RASP (Runtime Application Self-Protection)
+Une technologie de sécurité qui s'intègre à une application pour analyser le trafic et le comportement de l'utilisateur au moment de l'exécution, lui permettant de détecter et de prévenir les cyberattaques en temps réel.
+
+RFC (Request for Comments)
+Une publication de l'IETF et de l'Internet Society, les principales organisations de normalisation technique et de développement pour Internet. Les RFC sont des documents qui décrivent les méthodes, les comportements, la recherche ou les innovations applicables à Internet et aux systèmes connectés à Internet.
+
+RRDNS (Round Robin DNS)
+Une technique d'équilibrage de charge où la résolution de noms de domaine est gérée en répondant aux requêtes DNS avec une liste d'adresses IP de plusieurs serveurs qui hébergent le même service, en faisant tourner l'ordre de la liste.
+
+RRL (Response Rate Limiting)
+Une fonctionnalité des serveurs DNS pour limiter le nombre de réponses identiques qu'ils envoient à une même adresse IP source, afin d'atténuer les attaques par amplification DNS.
+
+RTP (Real-Time Protocol)
+Une norme de protocole réseau pour la livraison d'audio et de vidéo sur les réseaux IP, couramment utilisée dans les systèmes de téléphonie VoIP.
+
+S
+SELinux (Security-Enhanced Linux)
+Un module de sécurité du noyau Linux qui fournit un mécanisme pour prendre en charge les politiques de sécurité de contrôle d'accès, y compris les contrôles d'accès obligatoires (MAC).
+
+SIEM (Security Information and Event Management)
+Une solution logicielle qui agrège et analyse l'activité de nombreuses ressources différentes dans l'ensemble de votre infrastructure informatique. Elle collecte les données des journaux de sécurité et génère des alertes en cas d'activité suspecte.
+
+SIP (Session Initiation Protocol)
+Un protocole de signalisation utilisé pour initier, maintenir et terminer des sessions en temps réel qui incluent des applications vocales, vidéo et de messagerie. Il est fondamental pour la téléphonie VoIP.
+
+Snort
+Un système de prévention des intrusions (IPS) open-source et un système de détection des intrusions (IDS) créé à l'origine en 1998. C'est l'un des IPS les plus anciens et les plus influents.
+
+SNMP (Simple Network Management Protocol)
+Un protocole standard d'Internet pour collecter et organiser des informations sur les périphériques gérés sur les réseaux IP et pour modifier ces informations afin de changer le comportement des périphériques.
+
+SPAN (Switched Port Analyzer)
+Une fonctionnalité sur certains commutateurs réseau qui envoie une copie des paquets réseau vus sur un port de commutation (ou un VLAN entier) vers un autre port de commutation, où les paquets peuvent être analysés.
+
+Suricata
+Un moteur de détection des menaces réseau open-source, performant et mature, capable de détection d'intrusions en temps réel (IDS), de prévention des intrusions en ligne (IPS) et de surveillance de la sécurité du réseau (NSM).
+
+Syslog
+Un protocole standard utilisé pour envoyer des messages de journalisation de système ou d'événement à un serveur spécifique, appelé serveur syslog. Il est utilisé pour la gestion centralisée des journaux.
+
+T
+Tap (Network Tap)
+Un dispositif matériel qui permet de surveiller le trafic sur un segment de réseau. Il est inséré entre deux points du réseau (par exemple, entre un routeur et un commutateur) et copie tout le trafic qui le traverse vers un port de surveillance.
+
+tcpdump
+Un analyseur de paquets de données en ligne de commande qui permet à l'utilisateur d'afficher les paquets TCP/IP et autres qui sont transmis ou reçus sur un réseau.
+
+TFTP (Trivial File Transfer Protocol)
+Un protocole simple de transfert de fichiers, souvent utilisé pour transférer des fichiers de configuration ou de démarrage vers des périphériques réseau tels que des téléphones VoIP dans un environnement local.
+
+TLS (Transport Layer Security)
+Le successeur de SSL. Un protocole cryptographique conçu pour fournir une sécurité de communication sur un réseau informatique. Il est largement utilisé pour sécuriser les communications sur Internet, comme la navigation web (HTTPS).
+
+Tuple (5-tuple)
+Un ensemble de cinq valeurs qui identifie de manière unique une session ou un flux de trafic réseau : adresse IP source, port source, adresse IP de destination, port de destination et protocole.
+
+U
+Unlang
+Un langage de traitement simple utilisé par FreeRADIUS pour créer des politiques et des règles afin de contrôler le flux d'authentification et d'autorisation en fonction des attributs de la requête.
+
+V
+VIP (Virtual IP)
+Dans un contexte d'équilibrage de charge, il s'agit d'une adresse IP unique qui est assignée à plusieurs serveurs. Le trafic envoyé à la VIP est distribué par l'équilibreur de charge aux serveurs réels en arrière-plan.
+
+VoIP (Voice over IP)
+Un groupe de technologies pour la livraison de communications vocales et de sessions multimédias sur les réseaux de protocole Internet (IP).
+
+W
+WAF (Web Application Firewall)
+Un type de pare-feu qui filtre, surveille et bloque le trafic HTTP vers et depuis une application web. Il protège contre les attaques spécifiques aux applications web comme l'injection SQL et le cross-site scripting (XSS).
+
+Wireshark
+Un analyseur de protocole réseau gratuit et open-source. Il est utilisé pour le dépannage de réseau, l'analyse, le développement de logiciels et de protocoles de communication, et l'éducation.
+
+WPAD (Web Proxy Auto-Discovery Protocol)
+Une méthode utilisée par les clients pour localiser l'URL d'un fichier de configuration de proxy en utilisant les technologies DHCP et/ou DNS. Une attaque WPAD se produit lorsqu'un attaquant répond à ces requêtes pour diriger le trafic vers un proxy malveillant.
+
+Z
+Zeek
+Un cadre d'analyse de réseau open-source. Il inspecte le trafic réseau et crée des journaux de métadonnées riches et de haut niveau sur l'activité du réseau, qui peuvent être utilisés pour la surveillance de la sécurité, les enquêtes et l'analyse.
