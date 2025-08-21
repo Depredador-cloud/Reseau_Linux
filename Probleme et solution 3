@@ -1,0 +1,94 @@
+Problématique
+
+Mettre en place, avec un unique script Bash, une “appliance DNS” Linux qui:
+Publie une zone autoritative signée DNSSEC pour un domaine interne/externe.
+Fournit un résolveur récursif validant DNSSEC pour le LAN, en utilisant DoT vers des résolveurs amont.
+Est sécurisée (pas de récursion côté internet, transferts de zone protégés, pare‑feu strict) et observable (logs, tests automatiques).
+Contrainte: tout automatiser avec des outils Linux standards (BIND, Unbound, nftables, rsyslog, dig/kdig, nmap), en s’appuyant sur les chapitres DNS, pare‑feu, certificats, capture/monitoring.
+Objectifs mesurables
+
+Zone autoritative “example.lan” signée DNSSEC et servie sur 53/udp,tcp (externe).
+Résolveur récursif LAN validant DNSSEC, sortant en DoT vers 1.1.1.1 et 9.9.9.9.
+Récursion fermée depuis internet; transferts de zone permis uniquement avec TSIG vers le secondaire.
+Tests automatisés dig/kdig/nmap et journalisation syslog.
+Pré‑requis
+
+Ubuntu LTS, sudo, NTP à l’heure.
+Paquets: bind9, unbound, dnsutils, knot-dnsutils, nftables, rsyslog, nmap.
+Variables à définir: domaine (example.lan), IP publique autoritative, sous‑réseau LAN (ex: 192.168.10.0/24), IP du secondaire si présent.
+Architecture cible
+
+BIND (autoritatif seulement) écoute 0.0.0.0:53 pour la zone example.lan (signée DNSSEC).
+Unbound (récursif) écoute sur l’IP LAN, ACL restreinte au 192.168.10.0/24, validation DNSSEC activée, forward en DoT vers 1.1.1.1 et 9.9.9.9.
+nftables filtre: 53/udp,tcp autoritatif vers internet; 53 LAN vers Unbound; 853 sortant vers résolveurs DoT; SSH restreint.
+rsyslog collecte les journaux de requêtes/erreurs.
+Plan de résolution (Bash modulaire)
+
+Préparation système
+sudo apt-get update && sudo apt-get -y install bind9 unbound dnsutils knot-dnsutils nftables rsyslog nmap
+sudo systemctl enable --now nftables rsyslog
+Pare‑feu (chap. 4)
+Autoriser: input tcp,udp 53 (depuis internet vers IP publique pour BIND); input tcp,udp 53 (depuis LAN vers IP LAN pour Unbound).
+Bloquer récursion depuis internet (par règles nft et config Unbound); autoriser sortie tcp 853 (DoT).
+Vérifier: sudo nft list ruleset
+BIND autoritatif + DNSSEC (chap. 6)
+Créer la zone primaire “example.lan” (SOA, NS, A/AAAA, MX, etc.) dans /var/lib/bind/example.lan.zone.
+Générer clés DNSSEC: dnssec-keygen -a ECDSAP256SHA256 -n ZONE example.lan et dnssec-keygen -f KSK -a ECDSAP256SHA256 -n ZONE example.lan.
+Signer la zone: dnssec-signzone -o example.lan -N increment -k KSKfile ZSKfile /var/lib/bind/example.lan.zone
+named.conf: déclarer zone "example.lan" { type master; file "example.lan.zone.signed"; allow-transfer { key tsig-ex-secondary; }; notify yes; };
+TSIG (option secondaire): tsig-keygen -a hmac-sha256 ex-secondary > clé, puis key "tsig-ex-secondary" { algorithm hmac-sha256; secret "…"; };
+Sécurité BIND: options { recursion no; minimal-responses yes; rate-limit { responses-per-second 10; }; version "DNS"; };
+Recharger et vérifier: sudo named-checkconf; sudo named-checkzone example.lan /var/lib/bind/example.lan.zone.signed; sudo systemctl restart bind9
+Unbound récursif validant + DoT amont (chap. 6)
+unbound.conf (extraits): server: interface: 192.168.10.1 access-control: 192.168.10.0/24 allow; do-tcp: yes; do-udp: yes; auto-trust-anchor-file: "/var/lib/unbound/root.key"
+forward-zone: name: "." forward-tls-upstream: yes; forward-addr: 1.1.1.1@853#cloudflare-dns.com; forward-addr: 9.9.9.9@853#dns.quad9.net
+Démarrer: sudo unbound-anchor; sudo systemctl enable --now unbound
+Journalisation (chap. 12)
+Activer querylog: BIND (logging channel/query); Unbound (verbosity: 1, log-queries: yes).
+rsyslog: séparer /var/log/dns-authoritative.log et /var/log/dns-recursive.log par programname si nécessaire.
+Tests et validation (chap. 6)
+Autoritatif: dig @IP_PUB example.lan SOA +norecurse; dig @IP_PUB www.example.lan A +norecurse
+DNSSEC: dig @IP_PUB example.lan DNSKEY +norecurse; côté client LAN: dig +dnssec www.nic.cz @192.168.10.1 et vérifier le bit AD
+Récursion fermée: dig @IP_PUB www.google.com A +norecurse +retry=1 (doit échouer/REFUSED)
+DoT amont: kdig @1.1.1.1 +tls-ca +tls-host=cloudflare-dns.com www.example.com
+Nmap: nmap -sU -sT -p 53 IP_PUB --reason; nmap -sT -p 853 1.1.1.1
+Transferts: dig AXFR example.lan @IP_PUB (doit être refusé), puis dig AXFR example.lan @IP_PUB -y tsig-ex-secondary:… (autorisés si clé/secondaire)
+Sécurisation complémentaire (chap. 8, 4)
+Certificats: surveiller l’expiration DS/KSK/ZSK et planifier les rollovers.
+nftables: journaliser les scans et limiter le rate sur 53; SSH restreint au sous‑réseau d’admin.
+Surveillance et dépannage (chap. 11, 12)
+Logs: journalctl -u bind9 -f; journalctl -u unbound -f; grep NXDOMAIN ou SERVFAIL anormaux.
+Capture ciblée: sudo tcpdump -ni any port 53 -w /var/log/pcap/dns-%Y%m%d-%H%M.pcap (rotation -G/-W pour incidents).
+Script Bash “tout‑en‑un” (structure)
+Vérifier root; installer paquets; générer/configurer BIND (zone + DNSSEC + TSIG); configurer Unbound (ACL + DoT); appliquer nftables; activer journaux; exécuter tests dig/kdig/nmap; afficher un rapport de synthèse.
+Exemple d’appels utilisés dans le script:
+dnssec-keygen, dnssec-signzone, named-checkconf, named-checkzone, systemctl restart bind9
+unbound-anchor, systemctl restart unbound
+dig +dnssec, kdig +tls, nmap -p 53, tcpdump en rotation
+nft -f /etc/nftables.conf; nft list ruleset
+Pourquoi cette solution exploite le contenu du livre
+
+DNS autoritatif vs récursif, BIND et bonnes pratiques internet‑facing (récursion off, RRL, transferts TSIG, minimal‑responses) et dépannage dig/kdig (chap. 6).
+DNSSEC (zsk/ksk, signature, validation) et vérification du bit AD (chap. 6).
+DoT en sortie et validation avec kdig/nmap (chap. 6).
+Pare‑feu et journalisation avec nftables (chap. 4).
+Journalisation/alertes via rsyslog, captures ciblées tcpdump lors d’anomalies (chap. 11 et 12).
+Vérifications de bout en bout
+
+Résolution LAN valide et sécurisée: dig +dnssec www.example.com @192.168.10.1 → bit AD présent.
+Internet‑facing propre: nmap contre IP publique → uniquement 53/udp,tcp ouverts; dig récursif bloqué (REFUSED); AXFR refusé sans TSIG.
+Chaîne DNSSEC OK: dig DS example.lan @registrar‑resolver; absence de SERVFAIL sur la zone signée.
+DoT amont: kdig +tls vers 1.1.1.1 et 9.9.9.9 OK; nftables autorise 853 sortant.
+Dépannage rapide
+
+SERVFAIL côté LAN: vérifier auto-trust-anchor-file (unbound-anchor), heure NTP, signatures à jour (dnssec-signzone).
+Recursion encore ouverte: s’assurer recursion no dans BIND et que le flux LAN ne traverse pas BIND public.
+AXFR non protégé: vérifier allow-transfer et key TSIG côté BIND et IP du secondaire.
+DoT KO: vérifier sortie tcp 853, SNI (tls-host), horloge/certificats racines.
+Bonnes pratiques
+
+Séparer IP/IF: BIND sur IP publique, Unbound sur IP LAN (ou ports différents si contrainte).
+Automatiser la re‑signature de zone (cron/systemd timer) et la rotation clés; documenter DS chez le registrar.
+Limiter surface: nftables “deny by default” et journaux; surveiller les volumes/erreurs DNS.
+Versionner les fichiers de zone et confs; tester avec named-check* avant reload.
+Cette problématique et sa résolution livrent une appliance DNS complète, sûre et observable, bâtie exclusivement avec Bash et des composants Linux standards, en appliquant les recommandations des chapitres sur DNS, sécurité, monitoring et dépannage.
