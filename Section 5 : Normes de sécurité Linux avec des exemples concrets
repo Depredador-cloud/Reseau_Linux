@@ -1,0 +1,84 @@
+5 Normes de sécurité Linux avec des exemples concrets
+Objectif du chapitre
+
+Comprendre pourquoi et comment durcir des hôtes Linux au-delà de l’installation par défaut.
+S’appuyer sur des cadres reconnus (CIS Controls, CIS Benchmarks) et des mécanismes natifs (SELinux/AppArmor).
+Démarrer rapidement par l’inventaire matériel/logiciel, puis étendre vers la journalisation, le contrôle d’accès et l’automatisation.
+Exigences techniques
+
+Un hôte/VM Linux (ex. Ubuntu 20.x), droits sudo.
+Accès réseau pour mises à jour et installation d’outils (ex. osquery).
+Eventuellement un second hôte pour tester l’accès (ex. SSH) après durcissement.
+Pourquoi sécuriser les hôtes Linux
+
+Installations par défaut centrées sur la facilité d’usage (pare-feu parfois permissif, services actifs, paquets non à jour).
+Réduction de la surface d’attaque et amélioration de la résilience (avant et après incident).
+Conformité réglementaire et alignement sur les bonnes pratiques sectorielles.
+Considérations spécifiques au cloud
+
+Images de base souvent datées: exécuter mises à jour post‑déploiement (désactiver l’auto‑upgrade si pipeline de patching).
+Vérifier l’exposition réseau (ex. SSH ouvert sur Internet, groupes de sécurité, pare‑feu hôte).
+Partage de responsabilité: durcissement OS/app à votre charge, même sur des services gérés/“serverless”.
+Automatisation via API/IaC: appliquer les contrôles dès le provisioning (golden images, policies).
+Normes et cadres sectoriels (exemples)
+
+Finance/comptabilité: PCI‑DSS, SOX.
+Santé: HIPAA.
+Données personnelles: GDPR.
+Industriel/énergie: NERC CIP, ISA/IEC 62443.
+Bonnes pratiques transverses: ISO 27001/27002, NIST CSF.
+CIS Critical Security Controls (version 8)
+
+Approche priorisée, pratique et orientée adversaire.
+Groupes d’implémentation graduels:
+IG1 (bases): protections minimales pour ne plus être “le maillon faible”.
+IG2 (maturité): configurations techniques plus poussées, process sécurité dédiés.
+IG3 (avancé): équipes/procédures complètes (IR, tests d’intrusion, red teaming).
+Logique de progression: inventaire → durcissement → surveillance → réponse.
+Démarrer avec les contrôles CIS 1 et 2 (inventaires)
+
+Contrôle 1 (inventaire matériel): recenser hôtes/VM/appareils; détecter les non‑autorisés; intégrer au CMDB/IaC.
+Contrôle 2 (inventaire logiciel): lister paquets/services; détecter logiciels interdits/obsolètes; normaliser versions.
+Bénéfices immédiats: base solide pour patching, durcissement ciblé, monitoring pertinent.
+OSQuery pour 1, 2 (+10 et 17)
+
+Collecte normalisée sous forme de tables SQL (process, paquets, services, users, listening ports).
+Étend vers:
+Contrôle 10 (journalisation): visibilité consolidée sur événements système.
+Contrôle 17 (IR): indicateurs utiles pour détection/enquête (process anormaux, binaire inconnu, persistance).
+Intégration: exporter vers SIEM/ELK; planifier des requêtes récurrentes et alertes.
+CIS Benchmarks (durcir par rôle)
+
+Guides prescriptifs par OS/service (Ubuntu, RHEL, SSH, etc.).
+Appliquer un benchmark ≠ “tout cocher” aveuglément: adapter aux risques et à l’exploitation (test/validation).
+Exemple: appliquer un benchmark CIS à SSH
+
+Désactiver root login direct (PermitRootLogin no); privilégier sudo.
+N’imposer que Protocol 2; limiter les ciphers/MAC/KEX à des suites robustes.
+Limiter l’authentification par mot de passe (préférer clés/TOTP); réduire tentatives (MaxAuthTries).
+Configurer bannière légale; timeouts d’inactivité (ClientAliveInterval/CountMax).
+Restreindre par sous‑réseaux/VPN (pare‑feu hôte + groupes de sécurité).
+Journaliser en VERBOSE et expédier vers un serveur de logs central.
+SELinux et AppArmor
+
+SELinux:
+MAC puissant et granulaire (confinement par contexte); couverture large; plus exigeant à déployer.
+Idéal quand sécurité élevée requise; nécessite politique/test/monitoring (audit2allow, modes permissive/enforcing).
+AppArmor:
+Approach path‑based, profils plus simples; adoption répandue (Ubuntu, SUSE).
+Bon compromis simplicité/efficacité; facile à profiler/régler par service.
+Recommandation: activer l’un des deux selon la distro/équipe; commencer en “permissive”, corriger, puis “enforcing”.
+Bonnes pratiques opérationnelles
+
+Gouvernance des patchs: fenêtres de maintenance, canaux LTS/stables, tests pré‑prod, rollback (snapshots).
+Pare‑feu hôte: filtrer administration (SSH) et exposer le strict nécessaire; journaliser (corrélation SIEM).
+Principe du moindre privilège: comptes séparés, MFA, clés SSH gérées/rotations.
+Durcissement système: services inutiles off, permissions/umask, auditd/sysmon‑like, AIDE/integ‑check.
+Automatisation: Ansible/Puppet/Terraform/Cloud‑Init pour appliquer benchmarks/politiques de manière idempotente.
+Preuve et conformité: rapporter l’état (inventaires, drift, exceptions justifiées).
+À retenir
+
+Commencer simple et utile: inventaires (CIS 1 & 2) + durcissement SSH + pare‑feu hôte + mises à jour régulières.
+Outiller la visibilité (OSQuery + journaux centralisés) pour passer de la prévention à la détection/réponse.
+S’appuyer sur CIS Benchmarks pour standardiser; adapter au contexte; automatiser l’application et la vérification.
+Renforcer le contrôle d’accès au noyau (SELinux/AppArmor) une fois les fondamentaux maîtrisés.
