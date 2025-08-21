@@ -1,0 +1,83 @@
+14 Services de honeypot sous Linux
+
+Objectif du chapitre
+
+Comprendre le rôle des honeypots comme leurres pour détecter précocement les attaques et enrichir la veille.
+Savoir où et comment les déployer sous Linux (faible/moyenne interaction), en limitant les risques.
+Découvrir des implémentations légères (iptables/netcat/portspoof) et des solutions prêtes à l’emploi (Cowrie, Dionaea, etc.), dont le honeypot communautaire DShield.
+Exigences techniques
+
+Hôte/VM Linux avec sudo, réseau segmenté (DMZ/lab), NTP.
+Outils selon cas: iptables/nftables, netcat, Portspoof; honeypots applicatifs (Cowrie, Dionaea, Conpot, Glastopf); stack de logs (rsyslog/syslog‑ng + SIEM/ELK).
+Accès Internet optionnel (pour télémétrie/partage), strictement filtré en sortie.
+Aperçu – qu’est‑ce qu’un honeypot et pourquoi ?
+
+Système/servic e volontairement exposé, sans valeur de production, destiné à attirer l’attaquant.
+Bénéfices:
+Alertes à forte valeur (toute activité est suspecte).
+Renseignement: TTPs, commandes, échantillons malveillants.
+Déception: détourner le temps de l’adversaire, cartographier ses mouvements.
+Scénarios de déploiement et architecture
+
+Emplacements:
+Périmètre/DMZ (internet‑facing): collecte de scans/exploits grand public.
+Interne (LAN/serveurs): détection de mouvements latéraux.
+Darknet/sinkhole: IP non utilisées redirigées vers un leurre.
+Niveaux d’interaction:
+Faible (banner/ports): très sûr, peu de contexte.
+Moyenne (émulation protocolaire: SSH/Telnet/HTTP): bon compromis traces/risque.
+Élevée (système vulnérable réel): riche mais risqué (réservé aux labos).
+Intégration:
+Journalisation centralisée, tags “deception”, alertes en temps réel.
+Redirections DNAT/sinkhole depuis IP/ports inusités vers le honeypot.
+Risques liés au déploiement
+
+Pivot d’attaque si le leurre est compromis (impératif: egress filtering/isolations).
+Légalité/éthique (collecte d’indicateurs, PII/malware): gouvernance claire.
+Détection du leurre par l’attaquant (empreintes évidentes) → contournement/poisoning.
+Charge et bruit (scans volumétriques): prévoir quotas/limites.
+Exemples – honeypots d’alerte de port de base
+
+iptables/nftables:
+Log + rate‑limit + redirection vers un port d’écoute (DNAT vers honeypot).
+TARPIT (xtables‑addons): ralentit les scans TCP en gardant la session ouverte.
+netcat (nc):
+Listeners simples pour capturer bannières/commandes; réponses scriptées (echo/pipe).
+Portspoof:
+Émule de multiples services pour brouiller les scanners et générer des bannières trompeuses.
+Autres honeypots courants (moyenne interaction)
+
+Cowrie (SSH/Telnet): capture brute force, commandes shell, transferts de fichiers.
+Dionaea: piège à malwares (SMB/HTTP/etc.), collecte d’échantillons.
+Glastopf/T125 (Web): simulateur d’applis vulnérables (SQLi/RFI/LFI).
+Conpot: ICS/SCADA simulé (Modbus, S7), pour observer l’intérêt sur OT.
+Endlessh (SSH tarpit): retarde massivement les scans SSH.
+T‑Pot (plateforme intégrée): bundle multi‑honeypots + dashboards.
+Honeypot communautaire – DShield (Internet Storm Center)
+
+Image prête à l’emploi (souvent sur Raspberry Pi/VM) qui collecte et remonte les événements au projet ISC/DShield.
+Avantages: déploiement rapide, visibilité communautaire, contribution à la veille globale.
+Bonnes pratiques de déploiement
+
+Isolation forte: VLAN/VRF, pare‑feu strict, egress par défaut “deny”, pas d’accès latéral aux SI.
+Observabilité: logs détaillés (JSON), horodatage précis, export vers SIEM; alertes sur “premier contact”.
+Opsec déception: bannières réalistes, délais/réponses plausibles, empreintes système cohérentes.
+Sécurité opérationnelle: snapshots/rollback, mises à jour, nettoyage des artefacts malveillants en environnement contrôlé.
+À retenir
+
+Un honeypot bien placé fournit des alertes précoces et un renseignement riche à moindre coût.
+Préférer faible/moyenne interaction en production (risque maîtrisé) et réserver haute interaction au laboratoire.
+L’isolation réseau et l’egress filtering sont non négociables pour éviter l’usage du leurre comme relais d’attaque.
+L’option DShield permet de contribuer à la veille tout en simplifiant la mise en service.
+Questions (exemples)
+
+Où positionner un honeypot pour détecter en priorité les mouvements latéraux d’un ransomware ?
+Quels indicateurs collecter (commandes, hashes, IPs) et comment les corréler dans le SIEM ?
+Quelles techniques simples rendent un honeypot plus crédible sans augmenter le risque ?
+Comment rediriger des IP/ports inusités (sinkhole) vers un honeypot sans perturber la prod ?
+Lectures complémentaires (pistes)
+
+Projets: Cowrie, Dionaea, Conpot, Portspoof, Endlessh, T‑Pot.
+Internet Storm Center / DShield: documentation de déploiement et flux de soumission.
+Bonnes pratiques de déception/cyber deception et légal/éthique de la capture.
+Intégration SIEM (pipeline logs/artefacts, tagging “deception”).
