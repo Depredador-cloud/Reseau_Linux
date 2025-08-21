@@ -1,0 +1,103 @@
+11 Capture et analyse de paquets sous Linux
+Objectif du chapitre
+
+Savoir où et comment capturer des paquets sous Linux, avec les bons outils et filtres.
+Comprendre les impacts de performance et les architectures de capture (SPAN, TAP, inline).
+Utiliser tcpdump/Wireshark/TShark pour diagnostiquer (ex. VoIP), extraire des artefacts et filtrer efficacement.
+Exigences techniques
+
+Hôte/VM Linux avec droits sudo (mode promisc).
+Outils: tcpdump, Wireshark, TShark, dumpcap; utilitaires PCAP (editcap, mergecap, capinfos).
+Stockage rapide (I/O disque), horloge/NTP fiables.
+Où capturer – « bons endroits »
+
+Aux extrémités (client/serveur): capture locale, latence minimale, bonne visibilité applicative.
+Commutateur (SPAN/port mirroring): copie du trafic d’un port/VLAN vers un port d’analyse.
+Hôte intermédiaire en ligne (bridge NAT/proxy): visibilité bi‑directionnelle, mais ajoute un point de défaillance.
+TAP réseau: copie matérielle sans perturbation, idéal en production.
+Approches malveillantes (à connaître, à proscrire)
+
+ARP spoofing/poisoning pour se placer en MiTM.
+Rogue AP/proxy; détournement WPAD.
+Mises en garde légales/éthiques: capturer seulement avec autorisation explicite.
+Considérations de performance
+
+Éviter la perte de paquets: privilégier dump vers fichier (-w), désactiver la résolution DNS (-nn), augmenter buffers.
+Rotation de fichiers (-C taille, -G durée) et anneaux (ring buffer) pour longues captures.
+Snaplen (-s) adapté: complet pour forensic, réduit pour charge.
+CPU/IRQ/RSS/affinité, disques (SSD/NVMe), offloads NIC (GRO/LRO) selon besoins.
+Outils de capture
+
+tcpdump: léger/CLI, BPF capture filters, écrit PCAP/PCAPNG.
+Wireshark: GUI riche (décodage protocoles, follow stream, export objects, display filters).
+TShark: équivalent CLI de Wireshark (parse/filtrage/export scriptables).
+Autres PCAP utiles: dumpcap (capture haute perf), editcap (couper/échantillonner), mergecap (fusion), capinfos (métadonnées), ngrep/tcpflow (flux), tcpreplay (rejeu).
+Filtres de capture (BPF) – principes
+
+Capturer « le moins nécessaire » (réduction bruit/charge).
+Syntaxe de base: host/net/port/portrange, and/or/not, proto (tcp/udp/icmp/arp), ether proto.
+Exemples génériques:
+host 192.168.1.50
+net 10.0.0.0/8 and not port 22
+tcp port 443 or udp port 443
+ether proto 0x88cc (LLDP)
+Wireshark – filtres de capture (ex. réseau domestique)
+
+Capturer trafic internet sortant (éviter le bruit local):
+not (arp or mdns or ssdp or icmp) and not net 224.0.0.0/4
+Cibler un hôte:
+host 192.168.1.20 and not port 53
+tcpdump – filtres utiles (VoIP/DHCP)
+
+DHCP (ports 67/68):
+port 67 or port 68
+SIP/RTP (selon infra):
+udp port 5060 or portrange 10000-20000
+Commandes types:
+tcpdump -i eth0 -nn -s 0 -w trace.pcap
+tcpdump -i eth0 -nn port 67 or port 68
+tcpdump -i any -nn udp portrange 10000-20000
+Plus de filtres – LLDP/CDP
+
+LLDP (Ethertype 0x88cc):
+ether proto 0x88cc
+CDP (SNAP Cisco):
+ether[20:2] == 0x2000 (capture) ou display filter cdp dans Wireshark
+Collecter des fichiers depuis un PCAP
+
+Wireshark: File > Export Objects (HTTP/SMB/DICOM/etc.), Follow TCP/UDP Stream.
+TShark: extraction via display filters et « -T fields -e » selon protocole.
+Dépanner une application – exemple VoIP
+
+Capturer côté IP‑PBX et/ou téléphone (SIP/RTP).
+Vérifier signalisation (SIP INVITE/200 OK/ACK), codecs, RTP (paquets, gigue, perte).
+Display filters:
+sip, rtp, rtcp, sdp
+Problèmes typiques: NAT/ALG, ports dynamiques RTP non ouverts, MTU/MSS, asymétrie de routage.
+Wireshark – filtres d’affichage (analyse fine)
+
+Par 5‑tuple:
+ip.addr == 192.168.1.20 and tcp.port == 443
+Protocole:
+http or http2, dns, tls, ssh
+Erreurs:
+tcp.analysis.retransmission or tcp.analysis.flags
+TLS/SNI:
+tls.handshake.extensions_server_name contains "exemple.com"
+À retenir
+
+Choisir le point de capture selon la question (client, serveur, réseau).
+Filtrer à la capture pour préserver ressources; utiliser display filters pour l’analyse.
+tcpdump/TShark pour automatiser et collecter; Wireshark pour explorer/extraire.
+Prendre en compte performance (buffers, rotation, I/O) et légalité (autorisations).
+Questions (exemples)
+
+Quand privilégier un TAP à un SPAN pour une application sensible à la perte ?
+Quelle différence entre filtres de capture (BPF) et filtres d’affichage Wireshark ?
+Comment capturer et diagnostiquer une dégradation de qualité VoIP (SIP/RTP) ?
+Quelles options tcpdump réduisent la perte de paquets sur une liaison chargée ?
+Lectures complémentaires (pistes)
+
+Guides officiels Wireshark/tcpdump, Wiki Wireshark (display filters, protocoles).
+Bonnes pratiques SPAN/TAP et capture haute performance (dumpcap, buffers).
+Références VoIP (SIP/RTP/RTCP), filtres BPF avancés et outils PCAP annexes.
